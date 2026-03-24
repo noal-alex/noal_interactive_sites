@@ -11,14 +11,18 @@
             background-color: #1e1e2f;
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden; /* Prevents scrollbars */
+            overflow: hidden;
+            cursor: grab; /* Shows a hand cursor for panning */
         }
         
-        /* The side panel that pops up when a node is clicked */
+        body:active {
+            cursor: grabbing;
+        }
+
         #info-panel {
             position: absolute;
             top: 0;
-            right: -400px; /* Hidden off-screen by default */
+            right: -400px;
             width: 350px;
             height: 100vh;
             background-color: #2a2a40;
@@ -29,10 +33,7 @@
             z-index: 10;
         }
 
-        #info-panel.open {
-            right: 0; /* Slides in */
-        }
-
+        #info-panel.open { right: 0; }
         h2 { margin-top: 0; color: #4facfe; }
         p { line-height: 1.5; font-size: 14px; color: #d1d1e0; }
         
@@ -46,10 +47,8 @@
             float: right;
             font-weight: bold;
         }
-
         .close-btn:hover { background-color: #ff1c1c; }
 
-        /* Styling for the graph nodes and text */
         .node circle {
             cursor: pointer;
             stroke: #fff;
@@ -83,12 +82,11 @@
     </div>
 
     <script>
-        // 1. THE DATA: Here is where you will eventually put your own text and YouTube links
         const graphData = {
             nodes: [
                 { id: "Space Exploration", radius: 50, color: "#ff9a9e", text: "Welcome to the central hub! Click on the branches to explore different topics in space science.", video: "" },
                 { id: "The Universe", radius: 35, color: "#4facfe", text: "The universe contains all of space and time and their contents. Watch this CrashCourse video to understand how it all started.", video: "https://www.youtube.com/embed/HdPzOWlLrbE" },
-                { id: "The Solar System", radius: 35, color: "#4facfe", text: "Our solar system consists of our star, the Sun, and everything bound to it by gravity. Check out this quick breakdown.", video: "https://www.youtube.com/embed/s5iXSI_0XpQ" }
+                { id: "The Solar System", radius: 35, color: "#4facfe", text: "Our solar system consists of our star, the Sun, and everything bound to it by gravity. Check out this quick breakdown.", video: "https://www.youtube.com/embed/libKVRa01L8" } // Swapped to a reliable NatGeo video
             ],
             links: [
                 { source: "Space Exploration", target: "The Universe" },
@@ -100,27 +98,37 @@
         const height = window.innerHeight;
 
         const svg = d3.select("#graph-container");
+        
+        // ADDED: A "camera" group that holds all the circles and lines so we can zoom it
+        const g = svg.append("g");
 
-        // 2. THE PHYSICS: Setting up the bouncy forces
+        // ADDED: The Zoom and Pan physics
+        const zoom = d3.zoom()
+            .scaleExtent([0.5, 3]) // You can zoom out to half size, or zoom in to 3x size
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+            
+        svg.call(zoom);
+
         const simulation = d3.forceSimulation(graphData.nodes)
-            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(200)) // Distance between nodes
-            .force("charge", d3.forceManyBody().strength(-1000)) // How much they repel each other
-            .force("center", d3.forceCenter(width / 2, height / 2)); // Keeps it in the middle
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(200))
+            .force("charge", d3.forceManyBody().strength(-1000))
+            .force("center", d3.forceCenter(width / 2, height / 2));
 
-        // 3. DRAWING THE LINES
-        const link = svg.append("g")
+        // Note: Everything is now appended to 'g' instead of 'svg'
+        const link = g.append("g")
             .selectAll("line")
             .data(graphData.links)
             .enter().append("line")
             .attr("class", "link");
 
-        // 4. DRAWING THE CIRCLES (NODES)
-        const node = svg.append("g")
+        const node = g.append("g")
             .selectAll("g")
             .data(graphData.nodes)
             .enter().append("g")
             .attr("class", "node")
-            .call(d3.drag() // Allows you to drag the circles around
+            .call(d3.drag()
                 .on("start", dragstarted)
                 .on("drag", dragged)
                 .on("end", dragended));
@@ -128,14 +136,13 @@
         node.append("circle")
             .attr("r", d => d.radius)
             .attr("fill", d => d.color)
-            .on("click", (event, d) => openPanel(d)); // What happens when you click
+            .on("click", (event, d) => openPanel(d));
 
         node.append("text")
             .attr("dy", 5)
             .attr("text-anchor", "middle")
             .text(d => d.id);
 
-        // 5. ANIMATION LOOP
         simulation.on("tick", () => {
             link.attr("x1", d => d.source.x)
                 .attr("y1", d => d.source.y)
@@ -145,14 +152,12 @@
             node.attr("transform", d => `translate(${d.x},${d.y})`);
         });
 
-        // 6. INTERACTIVITY FUNCTIONS (Opening/Closing panels, Dragging)
         function openPanel(data) {
             document.getElementById("panel-title").innerText = data.id;
             document.getElementById("panel-text").innerText = data.text;
             
             const videoContainer = document.getElementById("panel-video");
             if (data.video) {
-                // Inserts the YouTube player if a link exists
                 videoContainer.innerHTML = `<iframe width="100%" height="200" src="${data.video}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
             } else {
                 videoContainer.innerHTML = "";
@@ -163,7 +168,6 @@
 
         function closePanel() {
             document.getElementById("info-panel").classList.remove("open");
-            // Clears the video so it stops playing when closed
             document.getElementById("panel-video").innerHTML = ""; 
         }
 
