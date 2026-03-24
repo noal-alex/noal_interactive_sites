@@ -12,7 +12,7 @@
             color: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
-            cursor: grab; /* Shows a hand cursor for panning */
+            cursor: grab;
         }
         
         body:active {
@@ -55,14 +55,18 @@
             stroke-width: 2px;
             transition: fill 0.2s;
         }
-        .node circle:hover { fill: #00f2fe !important; }
+        
+        /* Ensures dragging happens even if you click text */
         .node text {
             font-size: 14px;
             fill: white;
-            pointer-events: none;
+            pointer-events: none; /* Clicking "through" text to circle */
             font-weight: bold;
             text-shadow: 1px 1px 3px black;
         }
+        
+        .node circle:hover { fill: #00f2fe !important; }
+        
         .link {
             stroke: #4facfe;
             stroke-opacity: 0.6;
@@ -82,15 +86,16 @@
     </div>
 
     <script>
+        // THE DATA: Radii removed, will be calculated dynamically
         const graphData = {
             nodes: [
-                { id: "Space Exploration", radius: 50, color: "#ff9a9e", text: "Welcome to the central hub! Click on the branches to explore different topics in space science.", video: "" },
-                { id: "The Universe", radius: 35, color: "#4facfe", text: "The universe contains all of space and time and their contents. Watch this CrashCourse video to understand how it all started.", video: "https://www.youtube.com/embed/HdPzOWlLrbE" },
-                { id: "The Solar System", radius: 35, color: "#4facfe", text: "Our solar system consists of our star, the Sun, and everything bound to it by gravity. Check out this quick breakdown.", video: "https://www.youtube.com/embed/libKVRa01L8" } // Swapped to a reliable NatGeo video
+                { id: "Space Exploration Central Hub", color: "#ff9a9e", text: "Welcome to the central hub! Click on the branches to explore different topics in space science.", video: "" },
+                { id: "The Universe", color: "#4facfe", text: "The universe contains all of space and time and their contents. Watch this CrashCourse video to understand how it all started.", video: "https://www.youtube.com/embed/HdPzOWlLrbE" },
+                { id: "Our Solar System breakdown", color: "#4facfe", text: "Our solar system consists of our star, the Sun, and everything bound to it by gravity. Check out this quick breakdown.", video: "https://www.youtube.com/embed/libKVRa01L8" }
             ],
             links: [
-                { source: "Space Exploration", target: "The Universe" },
-                { source: "Space Exploration", target: "The Solar System" }
+                { source: "Space Exploration Central Hub", target: "The Universe" },
+                { source: "Space Exploration Central Hub", target: "Our Solar System breakdown" }
             ]
         };
 
@@ -99,31 +104,29 @@
 
         const svg = d3.select("#graph-container");
         
-        // ADDED: A "camera" group that holds all the circles and lines so we can zoom it
         const g = svg.append("g");
 
-        // ADDED: The Zoom and Pan physics
         const zoom = d3.zoom()
-            .scaleExtent([0.5, 3]) // You can zoom out to half size, or zoom in to 3x size
+            .scaleExtent([0.5, 3])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
             
         svg.call(zoom);
 
-        const simulation = d3.forceSimulation(graphData.nodes)
-            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(200))
-            .force("charge", d3.forceManyBody().strength(-1000))
-            .force("center", d3.forceCenter(width / 2, height / 2));
+        // Define simulation WITHOUT forces yet, we need collision size first
+        const simulation = d3.forceSimulation(graphData.nodes);
 
-        // Note: Everything is now appended to 'g' instead of 'svg'
+        // Drawing groups
         const link = g.append("g")
+            .attr("class", "links")
             .selectAll("line")
             .data(graphData.links)
             .enter().append("line")
             .attr("class", "link");
 
         const node = g.append("g")
+            .attr("class", "nodes")
             .selectAll("g")
             .data(graphData.nodes)
             .enter().append("g")
@@ -133,15 +136,39 @@
                 .on("drag", dragged)
                 .on("end", dragended));
 
-        node.append("circle")
-            .attr("r", d => d.radius)
-            .attr("fill", d => d.color)
-            .on("click", (event, d) => openPanel(d));
-
+        // APPEND TEXT FIRST to measure it
         node.append("text")
             .attr("dy", 5)
             .attr("text-anchor", "middle")
             .text(d => d.id);
+
+        // APPEND CIRCLE BEHIND TEXT (uses insert so it's first child in DOM)
+        node.insert("circle", ":first-child")
+            .attr("fill", d => d.color)
+            .on("click", (event, d) => openPanel(d));
+
+        // MEASURING LOGIC: Calculate radii based on text length
+        const padding = 20; // Extra room around text
+        const minRadius = 35; // Minimum size for very short text
+
+        node.each(function(d) {
+            const thisNode = d3.select(this);
+            // Get text width from browser rendering
+            const textWidth = thisNode.select("text").node().getBBox().width;
+            
+            // Calculate and store dynamic radius on data object
+            d.calculatedRadius = Math.max((textWidth / 2) + padding, minRadius);
+            
+            // Apply it to the circle
+            thisNode.select("circle").attr("r", d.calculatedRadius);
+        });
+
+        // Initialize Physics Simulation now that we know node sizes
+        simulation
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(250)) // longer distance for wider nodes
+            .force("charge", d3.forceManyBody().strength(-2000)) // increase repulsion
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collide", d3.forceCollide().radius(d => d.calculatedRadius + 10)); // uses calculatedRadius for collision
 
         simulation.on("tick", () => {
             link.attr("x1", d => d.source.x)
