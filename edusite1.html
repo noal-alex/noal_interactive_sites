@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Learning Map</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background-color: #1e1e2f;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* Prevents scrollbars */
+        }
+        
+        /* The side panel that pops up when a node is clicked */
+        #info-panel {
+            position: absolute;
+            top: 0;
+            right: -400px; /* Hidden off-screen by default */
+            width: 350px;
+            height: 100vh;
+            background-color: #2a2a40;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            transition: right 0.3s ease-in-out;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        #info-panel.open {
+            right: 0; /* Slides in */
+        }
+
+        h2 { margin-top: 0; color: #4facfe; }
+        p { line-height: 1.5; font-size: 14px; color: #d1d1e0; }
+        
+        .close-btn {
+            background-color: #ff4c4c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+            font-weight: bold;
+        }
+
+        .close-btn:hover { background-color: #ff1c1c; }
+
+        /* Styling for the graph nodes and text */
+        .node circle {
+            cursor: pointer;
+            stroke: #fff;
+            stroke-width: 2px;
+            transition: fill 0.2s;
+        }
+        .node circle:hover { fill: #00f2fe !important; }
+        .node text {
+            font-size: 14px;
+            fill: white;
+            pointer-events: none;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px black;
+        }
+        .link {
+            stroke: #4facfe;
+            stroke-opacity: 0.6;
+            stroke-width: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <svg id="graph-container" width="100vw" height="100vh"></svg>
+
+    <div id="info-panel">
+        <button class="close-btn" onclick="closePanel()">X</button>
+        <h2 id="panel-title">Topic</h2>
+        <p id="panel-text">Information goes here.</p>
+        <div id="panel-video"></div>
+    </div>
+
+    <script>
+        // 1. THE DATA: Here is where you will eventually put your own text and YouTube links
+        const graphData = {
+            nodes: [
+                { id: "Space Exploration", radius: 50, color: "#ff9a9e", text: "Welcome to the central hub! Click on the branches to explore different topics in space science.", video: "" },
+                { id: "The Universe", radius: 35, color: "#4facfe", text: "The universe contains all of space and time and their contents. Watch this CrashCourse video to understand how it all started.", video: "https://www.youtube.com/embed/HdPzOWlLrbE" },
+                { id: "The Solar System", radius: 35, color: "#4facfe", text: "Our solar system consists of our star, the Sun, and everything bound to it by gravity. Check out this quick breakdown.", video: "https://www.youtube.com/embed/s5iXSI_0XpQ" }
+            ],
+            links: [
+                { source: "Space Exploration", target: "The Universe" },
+                { source: "Space Exploration", target: "The Solar System" }
+            ]
+        };
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const svg = d3.select("#graph-container");
+
+        // 2. THE PHYSICS: Setting up the bouncy forces
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(200)) // Distance between nodes
+            .force("charge", d3.forceManyBody().strength(-1000)) // How much they repel each other
+            .force("center", d3.forceCenter(width / 2, height / 2)); // Keeps it in the middle
+
+        // 3. DRAWING THE LINES
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(graphData.links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        // 4. DRAWING THE CIRCLES (NODES)
+        const node = svg.append("g")
+            .selectAll("g")
+            .data(graphData.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(d3.drag() // Allows you to drag the circles around
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("circle")
+            .attr("r", d => d.radius)
+            .attr("fill", d => d.color)
+            .on("click", (event, d) => openPanel(d)); // What happens when you click
+
+        node.append("text")
+            .attr("dy", 5)
+            .attr("text-anchor", "middle")
+            .text(d => d.id);
+
+        // 5. ANIMATION LOOP
+        simulation.on("tick", () => {
+            link.attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        // 6. INTERACTIVITY FUNCTIONS (Opening/Closing panels, Dragging)
+        function openPanel(data) {
+            document.getElementById("panel-title").innerText = data.id;
+            document.getElementById("panel-text").innerText = data.text;
+            
+            const videoContainer = document.getElementById("panel-video");
+            if (data.video) {
+                // Inserts the YouTube player if a link exists
+                videoContainer.innerHTML = `<iframe width="100%" height="200" src="${data.video}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+            } else {
+                videoContainer.innerHTML = "";
+            }
+            
+            document.getElementById("info-panel").classList.add("open");
+        }
+
+        function closePanel() {
+            document.getElementById("info-panel").classList.remove("open");
+            // Clears the video so it stops playing when closed
+            document.getElementById("panel-video").innerHTML = ""; 
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+</html>
