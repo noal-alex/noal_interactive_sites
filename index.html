@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Learning Map</title>
+    <title>שוק האנרגיה והמלחמה - Interactive Map</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
@@ -19,23 +19,26 @@
             cursor: grabbing;
         }
 
+        /* Side panel updated for Hebrew RTL */
         #info-panel {
             position: absolute;
             top: 0;
-            right: -400px;
-            width: 350px;
+            left: -450px; /* Hidden on the left side now for RTL */
+            width: 400px;
             height: 100vh;
             background-color: #2a2a40;
-            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
-            transition: right 0.3s ease-in-out;
-            padding: 20px;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+            transition: left 0.3s ease-in-out;
+            padding: 30px;
             box-sizing: border-box;
             z-index: 10;
+            overflow-y: auto;
         }
 
-        #info-panel.open { right: 0; }
-        h2 { margin-top: 0; color: #4facfe; }
-        p { line-height: 1.5; font-size: 14px; color: #d1d1e0; }
+        #info-panel.open { left: 0; }
+        
+        h2 { margin-top: 0; color: #4facfe; font-size: 24px; line-height: 1.2; }
+        p { line-height: 1.6; font-size: 16px; color: #d1d1e0; }
         
         .close-btn {
             background-color: #ff4c4c;
@@ -44,7 +47,7 @@
             padding: 8px 12px;
             border-radius: 4px;
             cursor: pointer;
-            float: right;
+            float: left; /* Moved to left side for RTL */
             font-weight: bold;
         }
         .close-btn:hover { background-color: #ff1c1c; }
@@ -56,7 +59,6 @@
             transition: fill 0.2s, transform 0.2s;
         }
         
-        /* Adds a tiny pop effect when hovering over the circles */
         .node circle:hover { 
             fill: #00f2fe !important; 
             transform: scale(1.05);
@@ -67,13 +69,13 @@
             fill: white;
             pointer-events: none; 
             font-weight: bold;
-            text-shadow: 1px 1px 3px black;
+            text-shadow: 1px 1px 4px black, -1px -1px 4px black;
         }
         
         .link {
-            stroke: #4facfe;
+            stroke: #666;
             stroke-opacity: 0.6;
-            stroke-width: 3px;
+            stroke-width: 2px;
         }
     </style>
 </head>
@@ -83,22 +85,86 @@
 
     <div id="info-panel">
         <button class="close-btn" onclick="closePanel()">X</button>
-        <h2 id="panel-title">Topic</h2>
-        <p id="panel-text">Information goes here.</p>
+        <h2 id="panel-title">נושא</h2>
+        <p id="panel-text">מידע יופיע כאן.</p>
         <div id="panel-video"></div>
     </div>
 
     <script>
-        // THE DATA: We brought radius back. Central hub is 65, branches are 40.
+        // THE DATA: Structured with your 3 levels of hierarchy
         const graphData = {
             nodes: [
-                { id: "Space Exploration Central Hub", radius: 65, color: "#ff9a9e", text: "Welcome to the central hub! Click on the branches to explore different topics in space science.", video: "" },
-                { id: "The Universe", radius: 40, color: "#4facfe", text: "The universe contains all of space and time and their contents. Watch this CrashCourse video to understand how it all started.", video: "https://www.youtube.com/embed/HdPzOWlLrbE" },
-                { id: "Our Solar System breakdown", radius: 40, color: "#4facfe", text: "Our solar system consists of our star, the Sun, and everything bound to it by gravity. Check out this quick breakdown.", video: "https://www.youtube.com/embed/libKVRa01L8" }
+                // LEVEL 0: Central Hub
+                { id: "שוק האנרגיה והמלחמה", radius: 65, color: "#ff4c4c", text: "נושא מרכזי: שוק האנרגיה והמלחמה. לחצו על הענפים כדי לחקור את הנושאים השונים." },
+                
+                // LEVEL 1: The 4 Main Categories
+                { id: "1. כללי המשחק", radius: 50, color: "#4facfe", text: "כללי המשחק: כסף, פוליטיקה וזהב שחור" },
+                { id: "2. ניפוץ האשליה", radius: 50, color: "#a18cd1", text: "ניפוץ האשליה: למה העולם רק נהיה רעב יותר לאנרגיה?" },
+                { id: "3. אנרגיה כנשק", radius: 50, color: "#fbc2eb", text: "אנרגיה כנשק: מלחמות קרות, חרמות ונקודות חנק" },
+                { id: "4. הזירה המקומית", radius: 50, color: "#fad0c4", text: "הזירה המקומית: המזרח התיכון וישראל במוקד" },
+
+                // LEVEL 2: Sub-topics for Category 1 (Blue)
+                { id: "מה זה שוק האנרגיה?", radius: 35, color: "#80c9ff", text: "מה זה שוק האנרגיה בכלל? והמדינות שמייצרות אותו (נתונים ואחוזים)" },
+                { id: "מי שולט בנפט?", radius: 35, color: "#80c9ff", text: "מי ששולט בנפט שולט בעולם? מה משפיע על המחירים ומי מרוויח" },
+                { id: "חוזה לא כתוב", radius: 35, color: "#80c9ff", text: "חוזה לא כתוב - למה הנפט נסחר רק בדולרים ואיך זה קשור למחיר הדלק בטקסס" },
+                { id: "ונצואלה", radius: 35, color: "#80c9ff", text: "ונצואלה וההקשר של שוק האנרגיה העולמי" },
+
+                // LEVEL 2: Sub-topics for Category 2 (Purple)
+                { id: "צריכה גוברת", radius: 35, color: "#c2b5e6", text: "העולם צורך יותר אנרגיה בכל שנה ובקצב הולך וגדל ולא כמו שחשבנו.." },
+                { id: "צורכי הענן, קריפטו ו-AI", radius: 35, color: "#c2b5e6", text: "הגידול בצורכי הענן בכלל וספציפית סביב קריפטו ו-AI" },
+                { id: "אשליית הפוסט-פחמני", radius: 35, color: "#c2b5e6", text: "אשליית 'העתיד הפוסט-פחמני' ותופעת הסטקינג (Stacking)" },
+                { id: "אשליית האנרגיה המתחדשת", radius: 35, color: "#c2b5e6", text: "אשליית האנרגיה המתחדשת" },
+
+                // LEVEL 2: Sub-topics for Category 3 (Pink)
+                { id: "גיאופוליטיקה ומלחמה קרה", radius: 35, color: "#fcd6f4", text: "הגיאופוליטיקה של האנרגיה והמלחמה הקרה החדשה בין ארצות הברית לסין (והקשר לאנרגיות מתחדשות)" },
+                { id: "מלחמות אוקראינה ועזה", radius: 35, color: "#fcd6f4", text: "ההשפעה של מלחמות אוקראינה ועזה על עיצוב הבריתות הגלובליות" },
+                { id: "נשק המצרים", radius: 35, color: "#fcd6f4", text: "נשק המצרים ונקודות החנק הימיות – לוחמה פסיכולוגית מול מציאות לוגיסטית" },
+                { id: "איום הכתב\"ם", radius: 35, color: "#fcd6f4", text: "עם כתב\"ם אחד אפשר לחסום את המיצר (והפרסום ב'דבר' על המשמעות של סגירת מיצרי הורמוז)" },
+                { id: "תגובת מדינות", radius: 35, color: "#fcd6f4", text: "תגובת מדינות שונות למחסור חסר תקדים - הפסקות חשמל, פתיחת מחסנים ומדיניות ה-IEA" },
+
+                // LEVEL 2: Sub-topics for Category 4 (Peach)
+                { id: "סייקס פיקו", radius: 35, color: "#ffe6dd", text: "מה הקשר בין הסכם סייקס פיקו ושוק האנרגיה?" },
+                { id: "קואליציית הנפט והנשק", radius: 35, color: "#ffe6dd", text: "המזרח התיכון ומלחמות נפט - קואליציית הנפט והנשק" },
+                { id: "ריבוי בריתות", radius: 35, color: "#ffe6dd", text: "'ריבוי בריתות' (Multi-alignment) ועצמאותן של יצרניות הנפט הערביות" },
+                { id: "דיפלומטיה מבוססת נפט", radius: 35, color: "#ffe6dd", text: "דיפלומטיה מבוססת נפט והסכמי שלום במזרח התיכון" },
+                { id: "מיצרי הורמוז", radius: 35, color: "#ffe6dd", text: "נתיבי האנרגיה בעולם ומיצרי הורמוז (ההקשר הגיאוגרפי והאזורי)" },
+                { id: "ישראל כזירה בין-מעצמתית", radius: 35, color: "#ffe6dd", text: "המאבק הטכנולוגי-כלכלי וחשיבותה של ישראל כזירה בין-מעצמתית" },
+                { id: "ביטחון האנרגיה של ישראל", radius: 35, color: "#ffe6dd", text: "ביטחון האנרגיה של ישראל בצל מלחמות אזוריות" }
             ],
             links: [
-                { source: "Space Exploration Central Hub", target: "The Universe" },
-                { source: "Space Exploration Central Hub", target: "Our Solar System breakdown" }
+                // Links from Center to Main Categories
+                { source: "שוק האנרגיה והמלחמה", target: "1. כללי המשחק" },
+                { source: "שוק האנרגיה והמלחמה", target: "2. ניפוץ האשליה" },
+                { source: "שוק האנרגיה והמלחמה", target: "3. אנרגיה כנשק" },
+                { source: "שוק האנרגיה והמלחמה", target: "4. הזירה המקומית" },
+
+                // Links from Category 1
+                { source: "1. כללי המשחק", target: "מה זה שוק האנרגיה?" },
+                { source: "1. כללי המשחק", target: "מי שולט בנפט?" },
+                { source: "1. כללי המשחק", target: "חוזה לא כתוב" },
+                { source: "1. כללי המשחק", target: "ונצואלה" },
+
+                // Links from Category 2
+                { source: "2. ניפוץ האשליה", target: "צריכה גוברת" },
+                { source: "2. ניפוץ האשליה", target: "צורכי הענן, קריפטו ו-AI" },
+                { source: "2. ניפוץ האשליה", target: "אשליית הפוסט-פחמני" },
+                { source: "2. ניפוץ האשליה", target: "אשליית האנרגיה המתחדשת" },
+
+                // Links from Category 3
+                { source: "3. אנרגיה כנשק", target: "גיאופוליטיקה ומלחמה קרה" },
+                { source: "3. אנרגיה כנשק", target: "מלחמות אוקראינה ועזה" },
+                { source: "3. אנרגיה כנשק", target: "נשק המצרים" },
+                { source: "3. אנרגיה כנשק", target: "איום הכתב\"ם" },
+                { source: "3. אנרגיה כנשק", target: "תגובת מדינות" },
+
+                // Links from Category 4
+                { source: "4. הזירה המקומית", target: "סייקס פיקו" },
+                { source: "4. הזירה המקומית", target: "קואליציית הנפט והנשק" },
+                { source: "4. הזירה המקומית", target: "ריבוי בריתות" },
+                { source: "4. הזירה המקומית", target: "דיפלומטיה מבוססת נפט" },
+                { source: "4. הזירה המקומית", target: "מיצרי הורמוז" },
+                { source: "4. הזירה המקומית", target: "ישראל כזירה בין-מעצמתית" },
+                { source: "4. הזירה המקומית", target: "ביטחון האנרגיה של ישראל" }
             ]
         };
 
@@ -109,20 +175,22 @@
         const g = svg.append("g");
 
         const zoom = d3.zoom()
-            .scaleExtent([0.5, 3])
+            .scaleExtent([0.3, 3]) // Allowed to zoom out further because the graph is big
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
             
         svg.call(zoom);
+        
+        // Start zoomed out slightly so the whole large graph fits on screen
+        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8).translate(-width/2, -height/2));
 
-        // PHYSICS ENGINE
+        // PHYSICS ENGINE: Updated with stronger repulsion for the larger amount of nodes
         const simulation = d3.forceSimulation(graphData.nodes)
-            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(200))
-            .force("charge", d3.forceManyBody().strength(-1500)) 
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(180)) // Longer links
+            .force("charge", d3.forceManyBody().strength(-2000)) // Stronger repulsion to spread them out
             .force("center", d3.forceCenter(width / 2, height / 2))
-            // Adds extra padding to the collision so nodes don't overlap the text below them
-            .force("collide", d3.forceCollide().radius(d => d.radius + 40)); 
+            .force("collide", d3.forceCollide().radius(d => d.radius + 30)); // Collision padding
 
         const link = g.append("g")
             .attr("class", "links")
@@ -142,15 +210,13 @@
                 .on("drag", dragged)
                 .on("end", dragended));
 
-        // Draw the circles using the fixed radius from our data
         node.append("circle")
             .attr("r", d => d.radius)
             .attr("fill", d => d.color)
             .on("click", (event, d) => openPanel(d));
 
-        // Draw the text, pushing it down below the circle dynamically
         node.append("text")
-            .attr("dy", d => d.radius + 20) // Radius + 20 pixels of breathing room
+            .attr("dy", d => d.radius + 20)
             .attr("text-anchor", "middle")
             .text(d => d.id);
 
@@ -166,20 +232,11 @@
         function openPanel(data) {
             document.getElementById("panel-title").innerText = data.id;
             document.getElementById("panel-text").innerText = data.text;
-            
-            const videoContainer = document.getElementById("panel-video");
-            if (data.video) {
-                videoContainer.innerHTML = `<iframe width="100%" height="200" src="${data.video}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            } else {
-                videoContainer.innerHTML = "";
-            }
-            
             document.getElementById("info-panel").classList.add("open");
         }
 
         function closePanel() {
             document.getElementById("info-panel").classList.remove("open");
-            document.getElementById("panel-video").innerHTML = ""; 
         }
 
         function dragstarted(event, d) {
