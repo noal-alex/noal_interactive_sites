@@ -94,75 +94,6 @@
     </div>
 
     <script>
-        const graphData = {
-            nodes: [
-                { id: "שוק האנרגיה והמלחמה", radius: 65, color: "#ff4c4c", text: "נושא מרכזי: שוק האנרגיה והמלחמה. לחצו על הענפים כדי לחקור." },
-                
-                { id: "1. כללי המשחק", radius: 50, color: "#4facfe", text: "כללי המשחק: כסף, פוליטיקה וזהב שחור" },
-                { id: "2. ניפוץ האשליה", radius: 50, color: "#a18cd1", text: "ניפוץ האשליה: למה העולם רק נהיה רעב יותר לאנרגיה?" },
-                { id: "3. אנרגיה כנשק", radius: 50, color: "#fbc2eb", text: "אנרגיה כנשק: מלחמות קרות, חרמות ונקודות חנק" },
-                { id: "4. הזירה המקומית", radius: 50, color: "#fad0c4", text: "הזירה המקומית: המזרח התיכון וישראל במוקד" },
-
-                // CATEGORY 1
-                { id: "מה זה שוק האנרגיה?", radius: 35, color: "#80c9ff", text: "שוק האנרגיה מורכב ממשאבים כמו נפט, גז טבעי ואנרגיות מתחדשות. המזרח התיכון הוא שחקן מפתח בגלל הגיאולוגיה הייחודית שלו שיצרה מאגרי ענק של דלקים פוסיליים.<br><br><a href='https://www.bizportal.co.il/energy/news/article/20028649' target='_blank'>לקריאת המאמר בביזפורטל: למה דווקא במזרח התיכון יש כל כך הרבה נפט?</a>", video: "https://www.youtube.com/embed/lZ-ePjY5mGw" },
-                { id: "מי שולט בנפט?", radius: 35, color: "#80c9ff", text: "מי ששולט בנפט שולט בעולם? מה משפיע על המחירים ומי מרוויח" },
-                { id: "חוזה לא כתוב", radius: 35, color: "#80c9ff", text: "ב-1974 נחתם הסכם היסטורי: סעודיה תמכור נפט אך ורק בדולרים, ובתמורה תקבל הגנה צבאית מארה\"ב. הסדר ה'פטרודולר' הפך את הדולר למטבע הרזרבה העולמי. כיום, מדינות כמו סין ורוסיה מנסות לערער על שליטה זו על ידי סחר בנפט באמצעות יואן סיני ומטבעות קריפטוגרפיים.<br><br><a href='https://news.bitcoin.com/he/haftroyan-baliya-nituch-shel-doytshe-bank-mesamen-et-milhemet-iran-kenekudat-mifne-bdominantiyut-shel-hadolar-haamerikai/' target='_blank'>קראו עוד: האם מלחמות במזרח התיכון מסכנות את הדולר?</a>", video: "" },
-                { id: "ונצואלה", radius: 35, color: "#80c9ff", text: "למרות שוונצואלה מחזיקה בעתודות הנפט המוכחות הגדולות בעולם, כלכלתה קרסה לחלוטין. שחיתות, אינפלציה וסנקציות הובילו למשבר הומניטרי חריף. המדינה הפכה לזירת מאבק בין ארה\"ב, שמטילה מצור על ייצוא הנפט שלה, לבין סין ורוסיה שמשתמשות בה כעוגן גיאופוליטי.<br><br><a href='https://www.calcalist.co.il/world_news/article/syu55lxmzg' target='_blank'>לכתבה בכלכליסט: כך משחקת ארה\"ב בשוק הנפט של ונצואלה</a>", video: "" },
-
-                // CATEGORY 2
-                { id: "צריכה גוברת", radius: 35, color: "#c2b5e6", text: "העולם צורך יותר אנרגיה בכל שנה ובקצב הולך וגדל ולא כמו שחשבנו.." },
-                { id: "צורכי הענן, קריפטו ו-AI", radius: 35, color: "#c2b5e6", text: "הגידול העצום בחוות שרתים, כריית קריפטו ובינה מלאכותית דורש כמויות אדירות של חשמל וקירור. שאילתה אחת למודל AI דורשת פי 10 יותר אנרגיה מחיפוש רגיל בגוגל, מה שמאתגר את רשתות החשמל בעולם.<br><br><a href='https://letsai.co.il/ai-energy-consumption-impact/' target='_blank'>מאמר: כמה אנרגיה הצ'ט שלכם צורך?</a>", video: "" },
-                { id: "אשליית הפוסט-פחמני", radius: 35, color: "#c2b5e6", text: "אשליית 'העתיד הפוסט-פחמני' ותופעת הסטקינג (Stacking)" },
-                { id: "אשליית האנרגיה המתחדשת", radius: 35, color: "#c2b5e6", text: "אשליית האנרגיה המתחדשת" },
-
-                // CATEGORY 3
-                { id: "גיאופוליטיקה ומלחמה קרה", radius: 35, color: "#fcd6f4", text: "המלחמה הקרה החדשה בין ארה\"ב לסין מתמקדת בשליטה על טכנולוגיות ירוקות. סין שולטת כיום בכ-90% מכריית המינרלים הנדירים וברוב שרשרת האספקה של פאנלים סולריים וסוללות לרכבים חשמליים. השליטה הסינית הזו הופכת לנשק גיאופוליטי, בדיוק כמו השליטה ההיסטורית של המפרץ בנפט.<br><br><a href='https://energy.org.il/%D7%A4%D7%99%D7%99%D7%A0%D7%A0%D7%A9%D7%99%D7%90%D7%9C-%D7%98%D7%99%D7%99%D7%9E%D7%A1-%D7%A1%D7%99%D7%9F-%D7%94%D7%A9%D7%AA%D7%9C%D7%98%D7%94-%D7%A2%D7%9C-%D7%A9%D7%95%D7%A7-%D7%94%D7%90%D7%A0%D7%A8/' target='_blank'>למאמר מהפייננשיאל טיימס: סין השתלטה על שוק האנרגיות הנקיות</a>", video: "" },
-                { id: "מלחמות אוקראינה ועזה", radius: 35, color: "#fcd6f4", text: "ההשפעה של מלחמות אוקראינה ועזה על עיצוב הבריתות הגלובליות" },
-                { id: "נשק המצרים", radius: 35, color: "#fcd6f4", text: "נשק המצרים ונקודות החנק הימיות – לוחמה פסיכולוגית מול מציאות לוגיסטית" },
-                { id: "איום הכתב\"ם", radius: 35, color: "#fcd6f4", text: "כ-20% מאספקת הנפט העולמית עוברת דרך מיצרי הורמוז. פגיעה בנתיב זה באמצעות כטב\"מים (כמו אלו של החות'ים) עלולה לשתק את הכלכלה העולמית, להקפיץ את מחירי הביטוח, ולגרום למשבר אספקה מיידי.<br><br><a href='https://www.davar1.co.il/657718/' target='_blank'>לכתבה ב'דבר': המאבק על מיצרי הורמוז</a>", video: "https://www.youtube.com/embed/WVrZp18s6I4" },
-                { id: "תגובת מדינות", radius: 35, color: "#fcd6f4", text: "תגובת מדינות שונות למחסור חסר תקדים - הפסקות חשמל, פתיחת מחסנים ומדיניות ה-IEA" },
-
-                // CATEGORY 4
-                { id: "סייקס פיקו", radius: 35, color: "#ffe6dd", text: "מה הקשר בין הסכם סייקס פיקו ושוק האנרגיה?" },
-                { id: "קואליציית הנפט והנשק", radius: 35, color: "#ffe6dd", text: "המזרח התיכון ומלחמות נפט - קואליציית הנפט והנשק" },
-                { id: "ריבוי בריתות", radius: 35, color: "#ffe6dd", text: "'ריבוי בריתות' (Multi-alignment) ועצמאותן של יצרניות הנפט הערביות" },
-                { id: "דיפלומטיה מבוססת נפט", radius: 35, color: "#ffe6dd", text: "דיפלומטיה מבוססת נפט והסכמי שלום במזרח התיכון" },
-                { id: "מיצרי הורמוז", radius: 35, color: "#ffe6dd", text: "נתיבי האנרגיה בעולם ומיצרי הורמוז (ההקשר הגיאוגרפי והאזורי)" },
-                { id: "ישראל כזירה בין-מעצמתית", radius: 35, color: "#ffe6dd", text: "המאבק הטכנולוגי-כלכלי וחשיבותה של ישראל כזירה בין-מעצמתית" },
-                { id: "ביטחון האנרגיה של ישראל", radius: 35, color: "#ffe6dd", text: "ישראל היא 'אי אנרגטי' המנותק מרשתות החשמל של שכנותיה. בעשור האחרון התלות בגז הטבעי גברה לכ-75% מייצור החשמל, מה שיוצר סיכון במקרה של פגיעה ביטחונית באסדות או בצינורות ההולכה היחידים. חוקרי ה-INSS ממליצים על מעבר מהיר לאנרגיות מתחדשות וייצור חשמל מבוזר כדי להבטיח רציפות תפקודית בשעת מלחמה.<br><br><a href='https://www.inss.org.il/he/publication/electricity-system/' target='_blank'>קראו את תקציר המחקר של ה-INSS על ביטחון החשמל</a>", video: "" }
-            ],
-            links: [
-                { source: "שוק האנרגיה והמלחמה", target: "1. כללי המשחק" },
-                { source: "שוק האנרגיה והמלחמה", target: "2. ניפוץ האשליה" },
-                { source: "שוק האנרגיה והמלחמה", target: "3. אנרגיה כנשק" },
-                { source: "שוק האנרגיה והמלחמה", target: "4. הזירה המקומית" },
-
-                { source: "1. כללי המשחק", target: "מה זה שוק האנרגיה?" },
-                { source: "1. כללי המשחק", target: "מי שולט בנפט?" },
-                { source: "1. כללי המשחק", target: "חוזה לא כתוב" },
-                { source: "1. כללי המשחק", target: "ונצואלה" },
-
-                { source: "2. ניפוץ האשליה", target: "צריכה גוברת" },
-                { source: "2. ניפוץ האשליה", target: "צורכי הענן, קריפטו ו-AI" },
-                { source: "2. ניפוץ האשליה", target: "אשליית הפוסט-פחמני" },
-                { source: "2. ניפוץ האשליה", target: "אשליית האנרגיה המתחדשת" },
-
-                { source: "3. אנרגיה כנשק", target: "גיאופוליטיקה ומלחמה קרה" },
-                { source: "3. אנרגיה כנשק", target: "מלחמות אוקראינה ועזה" },
-                { source: "3. אנרגיה כנשק", target: "נשק המצרים" },
-                { source: "3. אנרגיה כנשק", target: "איום הכתב\"ם" },
-                { source: "3. אנרגיה כנשק", target: "תגובת מדינות" },
-
-                { source: "4. הזירה המקומית", target: "סייקס פיקו" },
-                { source: "4. הזירה המקומית", target: "קואליציית הנפט והנשק" },
-                { source: "4. הזירה המקומית", target: "ריבוי בריתות" },
-                { source: "4. הזירה המקומית", target: "דיפלומטיה מבוססת נפט" },
-                { source: "4. הזירה המקומית", target: "מיצרי הורמוז" },
-                { source: "4. הזירה המקומית", target: "ישראל כזירה בין-מעצמתית" },
-                { source: "4. הזירה המקומית", target: "ביטחון האנרגיה של ישראל" }
-            ]
-        };
-
         const width = window.innerWidth;
         const height = window.innerHeight;
 
@@ -178,49 +109,7 @@
         svg.call(zoom);
         svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8).translate(-width/2, -height/2));
 
-        const simulation = d3.forceSimulation(graphData.nodes)
-            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(180))
-            .force("charge", d3.forceManyBody().strength(-2000))
-            .force("center", d3.forceCenter(width / 2, height / 2))
-            .force("collide", d3.forceCollide().radius(d => d.radius + 30));
-
-        const link = g.append("g")
-            .attr("class", "links")
-            .selectAll("line")
-            .data(graphData.links)
-            .enter().append("line")
-            .attr("class", "link");
-
-        const node = g.append("g")
-            .attr("class", "nodes")
-            .selectAll("g")
-            .data(graphData.nodes)
-            .enter().append("g")
-            .attr("class", "node")
-            .call(d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended));
-
-        node.append("circle")
-            .attr("r", d => d.radius)
-            .attr("fill", d => d.color)
-            .on("click", (event, d) => openPanel(d));
-
-        node.append("text")
-            .attr("dy", d => d.radius + 20)
-            .attr("text-anchor", "middle")
-            .text(d => d.id);
-
-        simulation.on("tick", () => {
-            link.attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
-
-            node.attr("transform", d => `translate(${d.x},${d.y})`);
-        });
-
+        // Global functions for the info panel
         function openPanel(data) {
             document.getElementById("panel-title").innerText = data.id;
             
@@ -242,22 +131,72 @@
             document.getElementById("panel-video").innerHTML = ""; 
         }
 
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
+        // Load external JSON data
+        d3.json("data.json").then(function(graphData) {
+            
+            const simulation = d3.forceSimulation(graphData.nodes)
+                .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(180))
+                .force("charge", d3.forceManyBody().strength(-2000))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collide", d3.forceCollide().radius(d => d.radius + 30));
 
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-        }
+            const link = g.append("g")
+                .attr("class", "links")
+                .selectAll("line")
+                .data(graphData.links)
+                .enter().append("line")
+                .attr("class", "link");
 
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }
+            const node = g.append("g")
+                .attr("class", "nodes")
+                .selectAll("g")
+                .data(graphData.nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            node.append("circle")
+                .attr("r", d => d.radius)
+                .attr("fill", d => d.color)
+                .on("click", (event, d) => openPanel(d));
+
+            node.append("text")
+                .attr("dy", d => d.radius + 20)
+                .attr("text-anchor", "middle")
+                .text(d => d.id);
+
+            simulation.on("tick", () => {
+                link.attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+        }).catch(function(error) {
+            console.error("Error loading the JSON data:", error);
+        });
     </script>
 </body>
 </html>
