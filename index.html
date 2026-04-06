@@ -19,6 +19,27 @@
             cursor: grabbing;
         }
 
+        /* The new Back Button */
+        #back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background-color: #4facfe;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            display: none; /* Hidden by default */
+            transition: background-color 0.2s;
+        }
+
+        #back-btn:hover { background-color: #00f2fe; color: #1e1e2f; }
+
         #info-panel {
             position: absolute;
             top: 0;
@@ -39,7 +60,6 @@
         h2 { margin-top: 0; color: #4facfe; font-size: 24px; line-height: 1.2; }
         p { line-height: 1.6; font-size: 16px; color: #d1d1e0; }
         
-        /* Styling for the article links inside the text */
         p a { color: #00f2fe; text-decoration: none; font-weight: bold; }
         p a:hover { text-decoration: underline; }
         
@@ -59,12 +79,12 @@
             cursor: pointer;
             stroke: #fff;
             stroke-width: 2px;
-            transition: fill 0.2s, transform 0.2s;
+            transition: fill 0.2s, stroke-width 0.2s;
         }
         
         .node circle:hover { 
             fill: #00f2fe !important; 
-            transform: scale(1.05);
+            stroke-width: 4px;
         }
         
         .node text {
@@ -84,6 +104,9 @@
 </head>
 <body>
     <img src="https://raw.githubusercontent.com/noal-alex/noal_interactive_sites/refs/heads/main/logo_100.png" alt="לוגו התנועה" style="position: absolute; top: 20px; right: 20px; width: 300px; z-index: 100;">
+    
+    <button id="back-btn" onclick="goBack()">חזור לשכבה הקודמת</button>
+
     <svg id="graph-container" width="100vw" height="100vh"></svg>
 
     <div id="info-panel">
@@ -107,14 +130,15 @@
             });
             
         svg.call(zoom);
-        svg.call(zoom.transform, d3.zoomIdentity.translate(width/2, height/2).scale(0.8).translate(-width/2, -height/2));
+        
+        // Group containers so links always render behind nodes
+        const linksGroup = g.append("g").attr("class", "links");
+        const nodesGroup = g.append("g").attr("class", "nodes");
 
-        // Global functions for the info panel
+        // UI Panel Functions
         function openPanel(data) {
             document.getElementById("panel-title").innerText = data.id;
-            
-            // Using innerHTML allows clickable <a> links inside the text
-            document.getElementById("panel-text").innerHTML = data.text;
+            document.getElementById("panel-text").innerHTML = data.text || "אין מידע זמין.";
             
             const videoContainer = document.getElementById("panel-video");
             if (data.video) {
@@ -122,7 +146,6 @@
             } else {
                 videoContainer.innerHTML = "";
             }
-            
             document.getElementById("info-panel").classList.add("open");
         }
 
@@ -131,72 +154,178 @@
             document.getElementById("panel-video").innerHTML = ""; 
         }
 
+        // --- Data & State Management ---
+        let allNodes = [];
+        let allLinks = [];
+        let simulation;
+        
+        let currentCenterId = null;
+        let navigationHistory = []; // Tracks the path so we can go back
+
         // Load external JSON data
         d3.json("data.json").then(function(graphData) {
-            
-            const simulation = d3.forceSimulation(graphData.nodes)
-                .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(180))
-                .force("charge", d3.forceManyBody().strength(-2000))
+            allNodes = graphData.nodes;
+            allLinks = graphData.links;
+
+            // Initialize simulation (empty at first)
+            simulation = d3.forceSimulation()
+                .force("link", d3.forceLink().id(d => d.id).distance(220))
+                .force("charge", d3.forceManyBody().strength(-2500))
                 .force("center", d3.forceCenter(width / 2, height / 2))
-                .force("collide", d3.forceCollide().radius(d => d.radius + 30));
+                .force("collide", d3.forceCollide().radius(d => d.radius + 40));
 
-            const link = g.append("g")
-                .attr("class", "links")
-                .selectAll("line")
-                .data(graphData.links)
-                .enter().append("line")
-                .attr("class", "link");
-
-            const node = g.append("g")
-                .attr("class", "nodes")
-                .selectAll("g")
-                .data(graphData.nodes)
-                .enter().append("g")
-                .attr("class", "node")
-                .call(d3.drag()
-                    .on("start", dragstarted)
-                    .on("drag", dragged)
-                    .on("end", dragended));
-
-            node.append("circle")
-                .attr("r", d => d.radius)
-                .attr("fill", d => d.color)
-                .on("click", (event, d) => openPanel(d));
-
-            node.append("text")
-                .attr("dy", d => d.radius + 20)
-                .attr("text-anchor", "middle")
-                .text(d => d.id);
-
-            simulation.on("tick", () => {
-                link.attr("x1", d => d.source.x)
-                    .attr("y1", d => d.source.y)
-                    .attr("x2", d => d.target.x)
-                    .attr("y2", d => d.target.y);
-
-                node.attr("transform", d => `translate(${d.x},${d.y})`);
-            });
-
-            function dragstarted(event, d) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
-
-            function dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
-
-            function dragended(event, d) {
-                if (!event.active) simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
+            // Set the initial root node (Assuming the first node in your JSON is the root)
+            if (allNodes.length > 0) {
+                currentCenterId = allNodes[0].id;
+                updateGraph(currentCenterId);
             }
 
         }).catch(function(error) {
             console.error("Error loading the JSON data:", error);
         });
+
+        // Function to filter and update the graph based on the chosen center node
+        function updateGraph(centerNodeId) {
+            
+            // 1. Filter links connected to the center node
+            let activeLinks = allLinks.filter(l => {
+                let sourceId = l.source.id || l.source;
+                let targetId = l.target.id || l.target;
+                return sourceId === centerNodeId || targetId === centerNodeId;
+            });
+
+            // 2. Filter nodes involved in those links (plus the center node itself)
+            let activeNodeIds = new Set([centerNodeId]);
+            activeLinks.forEach(l => {
+                activeNodeIds.add(l.source.id || l.source);
+                activeNodeIds.add(l.target.id || l.target);
+            });
+            let activeNodes = allNodes.filter(n => activeNodeIds.has(n.id));
+
+            // 3. Update the visual Links using D3 .join()
+            const linkSelection = linksGroup.selectAll(".link")
+                .data(activeLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
+
+            const linkElements = linkSelection.join(
+                enter => enter.append("line").attr("class", "link").attr("stroke-opacity", 0).call(enter => enter.transition().duration(500).attr("stroke-opacity", 0.6)),
+                update => update,
+                exit => exit.transition().duration(300).attr("stroke-opacity", 0).remove()
+            );
+
+            // 4. Update the visual Nodes using D3 .join()
+            const nodeSelection = nodesGroup.selectAll(".node")
+                .data(activeNodes, d => d.id);
+
+            const nodeEnter = nodeSelection.enter().append("g")
+                .attr("class", "node")
+                .attr("transform", `translate(${width/2},${height/2})`) // Spawns from center
+                .attr("opacity", 0)
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            nodeEnter.append("circle")
+                .attr("r", 0)
+                .attr("fill", d => d.color)
+                .on("click", (event, d) => handleNodeClick(d));
+
+            nodeEnter.append("text")
+                .attr("dy", d => d.radius + 20)
+                .attr("text-anchor", "middle")
+                .text(d => d.id)
+                .style("opacity", 0);
+
+            const nodeElements = nodeEnter.merge(nodeSelection);
+
+            // Animate properties (make current center bigger)
+            nodeElements.transition().duration(500).attr("opacity", 1);
+            nodeElements.select("circle").transition().duration(500)
+                .attr("r", d => d.id === centerNodeId ? d.radius * 1.5 : d.radius); // Center circle is 50% larger
+            nodeElements.select("text").transition().duration(500)
+                .attr("dy", d => (d.id === centerNodeId ? d.radius * 1.5 : d.radius) + 20)
+                .style("opacity", 1);
+
+            nodeSelection.exit()
+                .transition().duration(300)
+                .attr("opacity", 0)
+                .remove();
+
+            // 5. Update the simulation data
+            simulation.nodes(activeNodes);
+            simulation.force("link").links(activeLinks);
+            simulation.alpha(1).restart();
+
+            // 6. Tick function
+            simulation.on("tick", () => {
+                linkElements
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+            // 7. Auto-zoom to center the new configuration
+            svg.transition().duration(750).call(
+                zoom.transform, 
+                d3.zoomIdentity.translate(width/2, height/2).scale(0.85).translate(-width/2, -height/2)
+            );
+        }
+
+        // Logic for clicking a node
+        function handleNodeClick(d) {
+            openPanel(d); // Open info panel
+
+            // If we click a child node (not the current center), drill down into it
+            if (d.id !== currentCenterId) {
+                // Add current to history
+                navigationHistory.push(currentCenterId);
+                // Set new center
+                currentCenterId = d.id;
+                
+                // Show Back button
+                document.getElementById("back-btn").style.display = "block";
+                
+                // Redraw graph
+                updateGraph(currentCenterId);
+            }
+        }
+
+        // Logic for clicking the Back button
+        function goBack() {
+            if (navigationHistory.length > 0) {
+                // Pop the last node out of history
+                currentCenterId = navigationHistory.pop();
+                
+                // Hide button if we are back at the start
+                if (navigationHistory.length === 0) {
+                    document.getElementById("back-btn").style.display = "none";
+                }
+                
+                // Redraw graph
+                updateGraph(currentCenterId);
+            }
+        }
+
+        // Drag functions
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
     </script>
 </body>
 </html>
