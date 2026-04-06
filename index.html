@@ -19,27 +19,6 @@
             cursor: grabbing;
         }
 
-        /* The new Back Button */
-        #back-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 100;
-            background-color: #4facfe;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            display: none; /* Hidden by default */
-            transition: background-color 0.2s;
-        }
-
-        #back-btn:hover { background-color: #00f2fe; color: #1e1e2f; }
-
         #info-panel {
             position: absolute;
             top: 0;
@@ -105,8 +84,6 @@
 <body>
     <img src="https://raw.githubusercontent.com/noal-alex/noal_interactive_sites/refs/heads/main/logo_100.png" alt="לוגו התנועה" style="position: absolute; top: 20px; right: 20px; width: 300px; z-index: 100;">
     
-    <button id="back-btn" onclick="goBack()">חזור לשכבה הקודמת</button>
-
     <svg id="graph-container" width="100vw" height="100vh"></svg>
 
     <div id="info-panel">
@@ -160,7 +137,6 @@
         let simulation;
         
         let currentCenterId = null;
-        let navigationHistory = []; // Tracks the path so we can go back
 
         // Load external JSON data
         d3.json("data.json").then(function(graphData) {
@@ -174,7 +150,7 @@
                 .force("center", d3.forceCenter(width / 2, height / 2))
                 .force("collide", d3.forceCollide().radius(d => d.radius + 40));
 
-            // Set the initial root node (Assuming the first node in your JSON is the root)
+            // Set the initial root node
             if (allNodes.length > 0) {
                 currentCenterId = allNodes[0].id;
                 updateGraph(currentCenterId);
@@ -276,33 +252,19 @@
 
         // Logic for clicking a node
         function handleNodeClick(d) {
-            openPanel(d); // Open info panel
+            openPanel(d); // Always open the info panel
 
-            // If we click a child node (not the current center), drill down into it
-            if (d.id !== currentCenterId) {
-                // Add current to history
-                navigationHistory.push(currentCenterId);
+            // Count how many total connections this clicked node has in the full dataset
+            let connectionCount = allLinks.filter(l => {
+                let sourceId = l.source.id || l.source;
+                let targetId = l.target.id || l.target;
+                return sourceId === d.id || targetId === d.id;
+            }).length;
+
+            // Drill down ONLY IF it's not the current center AND it has more than 1 connection
+            if (d.id !== currentCenterId && connectionCount > 1) {
                 // Set new center
                 currentCenterId = d.id;
-                
-                // Show Back button
-                document.getElementById("back-btn").style.display = "block";
-                
-                // Redraw graph
-                updateGraph(currentCenterId);
-            }
-        }
-
-        // Logic for clicking the Back button
-        function goBack() {
-            if (navigationHistory.length > 0) {
-                // Pop the last node out of history
-                currentCenterId = navigationHistory.pop();
-                
-                // Hide button if we are back at the start
-                if (navigationHistory.length === 0) {
-                    document.getElementById("back-btn").style.display = "none";
-                }
                 
                 // Redraw graph
                 updateGraph(currentCenterId);
