@@ -258,16 +258,24 @@
         }
 
         function handleNodeClick(d) {
-            openPanel(d);
+            // Count connections to see if this is a navigation node or a leaf
             let connectionCount = allLinks.filter(l => {
                 let sourceId = l.source.id || l.source;
                 let targetId = l.target.id || l.target;
                 return sourceId === d.id || targetId === d.id;
             }).length;
 
+            // Check: Are we moving to a new "Big Subject"?
             if (d.id !== currentCenterId && connectionCount > 1) {
+                // NAVIGATION: Just zoom in, don't open the panel
                 currentCenterId = d.id;
                 updateGraph(currentCenterId);
+                
+                // Optional: Close the panel if it was left open from a previous click
+                closePanel(); 
+            } else {
+                // CONTENT: It's a leaf node (or the node we're already centered on)
+                openPanel(d);
             }
         }
 
