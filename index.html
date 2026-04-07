@@ -112,7 +112,16 @@
 
         const svg = d3.select("#graph-container");
         const g = svg.append("g");
-
+        // Define a reusable circular clip path that scales to the element's bounding box
+        const defs = svg.append("defs");
+        defs.append("clipPath")
+            .attr("id", "circle-clip")
+            .attr("clipPathUnits", "objectBoundingBox")
+            .append("circle")
+            .attr("cx", 0.5)
+            .attr("cy", 0.5)
+            .attr("r", 0.5);
+        
         const zoom = d3.zoom()
             .scaleExtent([0.2, 4])
             .on("zoom", (event) => {
@@ -197,11 +206,25 @@
                 .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
             nodeEnter.append("circle").attr("r", 0).attr("fill", d => d.color || "#4facfe").on("click", (e, d) => handleNodeClick(d));
+
+            // ADD THIS: Append the image on top of the circle
+            nodeEnter.append("image")
+                .attr("href", d => d.image ? d.image.trim() : "") // Pulls from your Sheet
+                .attr("clip-path", "url(#circle-clip)") // Applies the perfect circle crop
+                .attr("preserveAspectRatio", "xMidYMid slice") // Ensures the image fills the circle without squishing
+                .style("pointer-events", "none"); // CRUCIAL: Allows clicks and hovers to pass through to the circle underneath
+            
             nodeEnter.append("text").attr("dy", d => d.radius + 20).attr("text-anchor", "middle").text(d => d.id).style("opacity", 0);
 
             const nodeElements = nodeEnter.merge(nodeSelection);
             nodeElements.transition().duration(500).attr("opacity", 1);
             nodeElements.select("circle").transition().duration(500).attr("r", d => d.id === centerNodeId ? d.radius * 1.4 : d.radius);
+            // ADD THIS: Animate the image size and position
+            nodeElements.select("image").transition().duration(500)
+                .attr("x", d => d.id === centerNodeId ? -d.radius * 1.4 : -d.radius)
+                .attr("y", d => d.id === centerNodeId ? -d.radius * 1.4 : -d.radius)
+                .attr("width", d => d.id === centerNodeId ? d.radius * 2.8 : d.radius * 2)
+                .attr("height", d => d.id === centerNodeId ? d.radius * 2.8 : d.radius * 2);
             nodeElements.select("text").transition().duration(500).attr("dy", d => (d.id === centerNodeId ? d.radius * 1.4 : d.radius) + 25).style("opacity", 1);
 
             nodeSelection.exit().transition().duration(300).attr("opacity", 0).remove();
