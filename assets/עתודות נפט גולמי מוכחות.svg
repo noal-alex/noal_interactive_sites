@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg  width="1200" height="750" xmlns="http://www.w3.org/2000/svg" font-family="Liberation Sans,sans-serif" font-size="45" text-anchor="middle">
+
+<rect width="1200" height="750" fill="#f4fff4"/>
+
+   <g transform="translate(375,400)" stroke="white" stroke-linejoin="round" stroke-width="1">
+
+<path transform="rotate(0)" d="M0,0 v-300 A300,300 0 0 1 284.99338,-93.695109 z" fill="#d02"/>
+<path transform="rotate(71.801079)" d="M0,0 v-300 A300,300 0 0 1 267.954659,-134.90849 z" fill="#555"/>
+<path transform="rotate(135.076964)" d="M0,0 v-300 A300,300 0 0 1 227.777177,-195.237183 z" fill="#777"/>
+
+<path transform="rotate(224.970399)" d="M0,0 v-300 A300,300 0 0 1 169.220359,-247.71853 z" fill="#999"/>
+<path transform="rotate(259.307986)" d="M0,0 v-300 A300,300 0 0 1 135.074589,-267.870968 z" fill="#bbb"/>
+<path transform="rotate(286.067623)" d="M0,0 v-300 A300,300 0 0 1 122.194655,-273.986252 z" fill="#ddd"/>
+<path transform="rotate(310.103934)" d="M0,0 v-300 A300,300 0 0 1 97.397497,-283.74941 z" fill="#dad"/>
+<path transform="rotate(329.04881)" d="M0,0 v-300 A300,300 0 0 1 59.613598,-294.017379 z" fill="#4a6"/>
+<path transform="rotate(340.51046)" d="M0,0 v-300 A300,300 0 0 1 55.476127,-294.826049 z" fill="#27b"/>
+<path transform="rotate(351.166953)" d="M0,0 v-300 A300,300 0 0 1 46.066745,-296.441993 z" fill="#f75"/>
+
+<path id="MiddleEast" transform="rotate(71.801079)" d="M0,0 v-150 A150,150 0 1 1 -127.625594,78.814388 z" fill="#dda" opacity="0.7" stroke="none"/>
+
+<path id="Canada" transform="rotate(184.475727)" d="M0,0 v-300 A300,300 0 0 1 194.8132,-228.139907 z" fill="#5af"/>
+
+   </g>
+
+   <g transform="translate(735,15)" text-anchor="start">
+
+<path stroke="#888" stroke-width="0.5" fill="#dda" opacity="0.7" d="
+M-15,132 h450
+v340 h-450
+v-171 h350
+v-54 h-350
+z
+"/>
+<text fill="#555" text-anchor="middle" transform="translate(400,302) rotate(-90)">המזרח התיכון</text>
+
+   <g stroke="black" stroke-width="0.5">
+<path fill="#d02" d="M0,82.5 v45 h45 v-45 z"/>
+<path fill="#555" d="M0,138.75 v45 h45 v-45 z"/>
+<path fill="#777" d="M0,195 v45 h45 v-45 z"/>
+<path fill="#5af" d="M0,251.25 v45 h45 v-45 z"/>
+<path fill="#999" d="M0,307.5 v45 h45 v-45 z"/>
+<path fill="#bbb" d="M0,363.75 v45 h45 v-45 z"/>
+<path fill="#ddd" d="M0,420 v45 h45 v-45 z"/>
+<path fill="#dad" d="M0,476.25 v45 h45 v-45 z"/>
+<path fill="#4a6" d="M0,532.5 v45 h45 v-45 z"/>
+<path fill="#27b" d="M0,588.75 v45 h45 v-45 z"/>
+<path fill="#f75" d="M0,645 v45 h45 v-45 z"/>
+   </g>
+
+<g transform="translate(67.5,0)">
+<text y="123">ונצואלה</text>
+<text y="179.25">ערב הסעודית</text>
+<text y="235.5">איראן</text>
+<text y="291.75">קנדה</text>
+<text y="348">עיראק</text>
+<text y="404.25">איחוד האמירויות</text>
+<text y="460.5">כווית</text>
+<text y="516.75">רוסיה</text>
+<text y="573">לוב</text>
+<text y="629.25">ארה"ב</text>
+<text y="685.5">ניגריה</text>
+</g> 
+
+   </g>
+
+
+<text font-size="60" text-anchor="middle" x="600" y="65">עתודות נפט גולמי מוכחות</text>
+
+   <g fill="#555">
+
+<g transform="translate(450,440)" font-size="35">
+<text>המזרח</text>
+<text y="40">התיכון</text>
+</g>
+
+<g transform="translate(290,400)" font-size="35">
+<text>המזרח</text>
+<text y="40">התיכון</text>
+</g>
+
+   </g>
+
+</svg>
