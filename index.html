@@ -237,7 +237,7 @@
             // Fills ~65% of the screen
             let scale = 0.65 / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
             
-            svg.transition().duration(800).cubicBezier(0.4, 0, 0.2, 1).call(
+            svg.transition().duration(800).ease(d3.easeCubicInOut).call(
                 zoom.transform, 
                 d3.zoomIdentity
                     .translate(window.innerWidth / 2, window.innerHeight / 2)
