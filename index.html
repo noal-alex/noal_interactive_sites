@@ -256,6 +256,19 @@
                     d.radius = +d.radius || 30;
                     return d;
                 }).filter(d => d.id !== "");
+
+                // At the top with your other variables
+                let isMobile = window.innerWidth <= 768;
+                let radiusScale = isMobile ? 1.5 : 1; 
+                
+                // Inside your Promise.all( ... ).then(function(files) { ... })
+                allNodes = files[0].map(d => {
+                    d.id = d.id ? d.id.trim() : "";
+                    // Multiply the base radius by our scale
+                    d.radius = (+d.radius || 30) * radiusScale; 
+                    return d;
+                }).filter(d => d.id !== "");
+
                 
                 let validNodeIds = new Set(allNodes.map(n => n.id));
                 allLinks = files[1].map(d => {
@@ -357,28 +370,30 @@
         }
 
         function fitToNodes(nodes) {
-            if (nodes.length === 0) return;
-
-            let minX = d3.min(nodes, d => d.x - d.radius - 50);
-            let maxX = d3.max(nodes, d => d.x + d.radius + 50);
-            let minY = d3.min(nodes, d => d.y - d.radius - 50);
-            let maxY = d3.max(nodes, d => d.y + d.radius + 80); 
-
-            let graphW = maxX - minX;
-            let graphH = maxY - minY;
-            let centerX = (minX + maxX) / 2;
-            let centerY = (minY + maxY) / 2;
-
-            let scale = 0.65 / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
-            
-            svg.transition().duration(800).ease(d3.easeCubicInOut).call(
-                zoom.transform, 
-                d3.zoomIdentity
-                    .translate(window.innerWidth / 2, window.innerHeight / 2)
-                    .scale(scale)
-                    .translate(-centerX, -centerY)
-            );
-        }
+        if (nodes.length === 0) return;
+    
+        // Increase padding (the 100 and 150) so the camera stays further back
+        let minX = d3.min(nodes, d => d.x - d.radius - 100);
+        let maxX = d3.max(nodes, d => d.x + d.radius + 100);
+        let minY = d3.min(nodes, d => d.y - d.radius - 100);
+        let maxY = d3.max(nodes, d => d.y + d.radius + 150); 
+    
+        let graphW = maxX - minX;
+        let graphH = maxY - minY;
+        let centerX = (minX + maxX) / 2;
+        let centerY = (minY + maxY) / 2;
+    
+        // We change the scale from 0.65 to 0.5 to zoom out more
+        let scale = 0.5 / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
+        
+        svg.transition().duration(800).ease(d3.easeCubicInOut).call(
+            zoom.transform, 
+            d3.zoomIdentity
+                .translate(window.innerWidth / 2, window.innerHeight / 2)
+                .scale(scale)
+                .translate(-centerX, -centerY)
+        );
+    }
 
         function handleNodeClick(d) {
             let connectionCount = allLinks.filter(l => (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id).length;
