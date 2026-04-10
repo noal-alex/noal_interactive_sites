@@ -17,6 +17,7 @@
             --danger-hover: #ff1c1c;
             --link-color: #8c8279;
             --loader-border: #3d353c;
+            --visited-tick: #7ed99b;
         }
 
         body {
@@ -96,6 +97,16 @@
             font-weight: bold;
             text-shadow: 1px 1px 4px black, -1px -1px 4px black;
         }
+        .node .tick-mark {
+            font-size: 13px;
+            fill: var(--visited-tick);
+            pointer-events: none;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0,0,0,0.9);
+            opacity: 0;
+        }
+        .node .tick-mark.visible { opacity: 1; }
+
         .link {
             stroke: var(--link-color);
             stroke-opacity: 0.4;
@@ -155,10 +166,8 @@
         }
 
         /* =============================================
-           חדש: כפתור מצב מלא + פירורי לחם
+           כפתורים שמאל תחתון
         ============================================= */
-
-        /* כפתור Toggle */
         #toggle-mode-btn {
             position: absolute;
             bottom: 28px;
@@ -188,13 +197,34 @@
             color: var(--bg-main);
         }
 
+        #reset-progress-btn {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            z-index: 100;
+            background-color: transparent;
+            color: rgba(224, 183, 119, 0.5);
+            border: 1px solid rgba(224, 183, 119, 0.3);
+            padding: 7px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: color 0.2s, border-color 0.2s, background 0.2s;
+            white-space: nowrap;
+        }
+        #reset-progress-btn:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+            background-color: rgba(255, 76, 76, 0.08);
+        }
+
         /* פירורי לחם */
         #breadcrumb-bar {
             position: absolute;
             top: 120px;
             left: 20px;
             right: auto;
-            transform: none;
             z-index: 100;
             display: flex;
             align-items: center;
@@ -204,11 +234,17 @@
             border-radius: 30px;
             padding: 7px 18px;
             backdrop-filter: blur(4px);
-            max-width: calc(55vw - 40px);
-            overflow-x: auto;
-            scrollbar-width: none;
+
+            /* The Safety Net */
+            max-width: 80vw;      /* Don't let it cover more than 80% of the screen */
+            overflow-x: auto;     /* Allow swiping if names are long */
+            white-space: nowrap;  /* Keep it all on one line */
+            scrollbar-width: none; /* Hide scrollbar for clean look */
         }
-        #breadcrumb-bar::-webkit-scrollbar { display: none; }
+
+        #breadcrumb-bar::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome/Safari */
+        }
 
         .bc-item {
             color: rgba(240, 230, 214, 0.6);
@@ -252,13 +288,12 @@
         שגיאה בטעינת הנתונים. אנא רענן את העמוד או נסה שוב מאוחר יותר.
     </div>
 
-    <!-- פירורי לחם -->
     <div id="breadcrumb-bar"></div>
 
     <svg id="graph-container" width="100vw" height="100vh"></svg>
 
-    <!-- כפתור מצב מלא -->
-    <button id="toggle-mode-btn" onclick="toggleMode()">🕸 הצג את כל הגרף</button>
+    <button id="reset-progress-btn" onclick="resetProgress()">↺ איפוס התקדמות</button>
+    <button id="toggle-mode-btn" onclick="toggleMode()">הצג את כל הנקודות 🕸 </button>
 
     <div id="info-panel">
         <button class="close-btn" onclick="closePanel()">סגור X</button>
@@ -271,7 +306,9 @@
     <script>
         const cssVars = getComputedStyle(document.documentElement);
         const primaryColor = cssVars.getPropertyValue('--primary').trim();
-        const secondaryColor = cssVars.getPropertyValue('--secondary').trim();
+
+        const STORAGE_KEY = "noal_visited_nodes";
+        const SHOW_BREADCRUMBS = false; // Change to true when you're ready!
 
         const nodesCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTuF0csf_5-brKojkg2-AHN76hTmbAv6c8Whw3fcWAGpf-0-gRqGC5bCFnD_ogBN5VMG0Y4ZQa-u5I/pub?gid=0&single=true&output=csv";
         const linksCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTuF0csf_5-brKojkg2-AHN76hTmbAv6c8Whw3fcWAGpf-0-gRqGC5bCFnD_ogBN5VMG0Y4ZQa-u5I/pub?gid=389930858&single=true&output=csv";
@@ -281,6 +318,30 @@
         let isMobile = window.innerWidth <= 768;
         let radiusScale = isMobile ? 1.3 : 1;
 
+        /* =============================================
+           visited nodes — localStorage
+        ============================================= */
+        let visitedNodes = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
+
+        function markVisited(nodeId) {
+            visitedNodes.add(nodeId);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify([...visitedNodes]));
+        }
+
+        function resetProgress() {
+            if (!confirm("לאפס את כל ההתקדמות? הסימונים ימחקו.")) return;
+            visitedNodes.clear();
+            localStorage.removeItem(STORAGE_KEY);
+            // נקה את כל הווים הנראים
+            nodesGroup.selectAll(".tick-mark").classed("visible", false);
+        }
+
+        function getTickX(r) { return r * 0.65; }
+        function getTickY(r) { return -r * 0.65; }
+
+        /* =============================================
+           D3 setup
+        ============================================= */
         const svg = d3.select("#graph-container");
         const g = svg.append("g");
 
@@ -301,10 +362,10 @@
         const nodesGroup = g.append("g").attr("class", "nodes");
 
         /* =============================================
-           מצב תצוגה + פירורי לחם - משתנים חדשים
+           מצב תצוגה + פירורי לחם
         ============================================= */
         let isFullMode = false;
-        let navHistory = [];   // מערך של { id, data } לנווט אחורה
+        let navHistory = [];
 
         function toggleMode() {
             isFullMode = !isFullMode;
@@ -314,10 +375,59 @@
                 btn.classList.add("full-mode");
                 showFullGraph();
             } else {
-                btn.textContent = "🕸 הצג את כל הגרף";
+                btn.textContent = "הצג את כל הנקודות 🕸 ";
                 btn.classList.remove("full-mode");
                 updateGraph(currentCenterId);
             }
+        }
+
+        function buildNodeGroup(selection, centerNodeId) {
+            selection.append("circle")
+                .attr("r", 0)
+                .attr("fill", d => d.color || primaryColor)
+                .on("click", (e, d) => handleNodeClick(d));
+
+            selection.append("image")
+                .attr("href", d => d.image ? d.image.trim() : "")
+                .attr("clip-path", "url(#circle-clip)")
+                .attr("preserveAspectRatio", "xMidYMid slice")
+                .style("pointer-events", "none");
+
+            selection.append("text")
+                .attr("dy", d => d.radius + 20)
+                .attr("text-anchor", "middle")
+                .text(d => d.id);
+
+            // וו visited
+            selection.append("text")
+                .attr("class", d => "tick-mark" + (visitedNodes.has(d.id) ? " visible" : ""))
+                .attr("x", d => getTickX(centerNodeId && d.id === centerNodeId ? d.radius * 1.3 : d.radius))
+                .attr("y", d => getTickY(centerNodeId && d.id === centerNodeId ? d.radius * 1.3 : d.radius))
+                .attr("text-anchor", "middle")
+                .text("✓");
+        }
+
+        function applyNodeTransitions(nodeElements, centerNodeId) {
+            const isFull = !centerNodeId;
+            nodeElements.transition().duration(500).attr("opacity", 1);
+
+            nodeElements.select("circle").transition().duration(500)
+                .attr("r", d => (!isFull && d.id === centerNodeId) ? d.radius * 1.3 : d.radius);
+
+            nodeElements.select("text").transition().duration(500)
+                .attr("dy", d => d.id === centerNodeId ? d.radius * 1.3 + 20 : d.radius + 20);
+
+            nodeElements.select("image").transition().duration(500)
+                .attr("x", d => (!isFull && d.id === centerNodeId) ? -d.radius * 1.3 : -d.radius)
+                .attr("y", d => (!isFull && d.id === centerNodeId) ? -d.radius * 1.3 : -d.radius)
+                .attr("width", d => (!isFull && d.id === centerNodeId) ? d.radius * 2.6 : d.radius * 2)
+                .attr("height", d => (!isFull && d.id === centerNodeId) ? d.radius * 2.6 : d.radius * 2);
+
+            nodeElements.select(".tick-mark")
+                .classed("visible", d => visitedNodes.has(d.id))
+                .transition().duration(500)
+                .attr("x", d => getTickX((!isFull && d.id === centerNodeId) ? d.radius * 1.3 : d.radius))
+                .attr("y", d => getTickY((!isFull && d.id === centerNodeId) ? d.radius * 1.3 : d.radius));
         }
 
         function showFullGraph() {
@@ -326,34 +436,19 @@
 
             const nodeSelection = nodesGroup.selectAll(".node").data(allNodes, d => d.id);
             const nodeEnter = nodeSelection.enter().append("g")
-                .attr("class", "node")
-                .attr("opacity", 0)
+                .attr("class", "node").attr("opacity", 0)
                 .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
-            nodeEnter.append("circle")
-                .attr("r", 0)
-                .attr("fill", d => d.color || primaryColor)
-                .on("click", (e, d) => handleNodeClick(d));
-
-            nodeEnter.append("image")
-                .attr("href", d => d.image ? d.image.trim() : "")
-                .attr("clip-path", "url(#circle-clip)")
-                .attr("preserveAspectRatio", "xMidYMid slice")
-                .style("pointer-events", "none");
-
-            nodeEnter.append("text").attr("dy", d => d.radius + 20).attr("text-anchor", "middle").text(d => d.id);
+            buildNodeGroup(nodeEnter, null);
 
             const nodeElements = nodeEnter.merge(nodeSelection);
-            nodeElements.transition().duration(500).attr("opacity", 1);
-            nodeElements.select("circle").transition().duration(500).attr("r", d => d.radius);
-            nodeElements.select("image").transition().duration(500)
-                .attr("x", d => -d.radius).attr("y", d => -d.radius)
-                .attr("width", d => d.radius * 2).attr("height", d => d.radius * 2);
-
+            applyNodeTransitions(nodeElements, null);
             nodeSelection.exit().remove();
 
             simulation.nodes(allNodes);
             simulation.force("link").links(allLinks);
+            simulation.force("charge", d3.forceManyBody().strength(-1200 * radiusScale));
+            simulation.force("collide", d3.forceCollide().radius(d => d.radius + 60));
             simulation.alpha(1).restart();
 
             simulation.on("tick", () => {
@@ -366,7 +461,6 @@
 
         /* --- פירורי לחם --- */
         function pushBreadcrumb(nodeData) {
-            // אם לחצו על צומת שכבר בהיסטוריה – קצר אליה
             const existingIdx = navHistory.findIndex(h => h.id === nodeData.id);
             if (existingIdx !== -1) {
                 navHistory = navHistory.slice(0, existingIdx + 1);
@@ -377,34 +471,77 @@
         }
 
         function renderBreadcrumb() {
+            if (!SHOW_BREADCRUMBS) return; // This stops the function immediately
             const bar = document.getElementById("breadcrumb-bar");
             bar.innerHTML = "";
-            navHistory.forEach((item, idx) => {
-                const isLast = idx === navHistory.length - 1;
+            
+            // We want the last 4 items
+            const MAX_VISIBLE = 4; 
+            let displayItems = navHistory;
+            let showingEllipsis = false;
+
+            if (navHistory.length > MAX_VISIBLE) {
+                // Take the last 4
+                displayItems = navHistory.slice(-MAX_VISIBLE);
+                showingEllipsis = true;
+            }
+
+            // 1. If we truncated the list, show an ellipsis (...)
+            if (showingEllipsis) {
+                const ell = document.createElement("span");
+                ell.className = "bc-item";
+                ell.textContent = "...";
+                // Optional: Clicking '...' takes you back to the very first node (Home)
+                ell.addEventListener("click", () => {
+                    const firstNode = navHistory[0];
+                    handleNodeClick(firstNode.data);
+                });
+                bar.appendChild(ell);
+
+                const sep = document.createElement("span");
+                sep.className = "bc-separator";
+                sep.textContent = "←";
+                bar.appendChild(sep);
+            }
+
+            // 2. Render the display items
+            displayItems.forEach((item, idx) => {
+                const isLast = idx === displayItems.length - 1;
                 const span = document.createElement("span");
                 span.className = "bc-item" + (isLast ? " bc-current" : "");
                 span.textContent = item.id;
+
                 if (!isLast) {
                     span.addEventListener("click", () => {
-                        navHistory = navHistory.slice(0, idx + 1);
+                        // Find the index in the ORIGINAL full history
+                        const originalIdx = navHistory.findIndex(h => h.id === item.id);
+                        // Cut the history to that point
+                        navHistory = navHistory.slice(0, originalIdx + 1);
+                        
                         renderBreadcrumb();
                         currentCenterId = item.id;
                         isFullMode = false;
-                        document.getElementById("toggle-mode-btn").textContent = "🕸 הצג את כל הגרף";
-                        document.getElementById("toggle-mode-btn").classList.remove("full-mode");
+                        
+                        // Update UI
+                        const btn = document.getElementById("toggle-mode-btn");
+                        btn.textContent = "הצג את כל הנקודות 🕸 ";
+                        btn.classList.remove("full-mode");
+                        
                         updateGraph(currentCenterId);
                         openPanel(item.data);
                     });
                 }
                 bar.appendChild(span);
-                if (idx < navHistory.length - 1) {
+
+                if (!isLast) {
                     const sep = document.createElement("span");
                     sep.className = "bc-separator";
                     sep.textContent = "←";
                     bar.appendChild(sep);
                 }
             });
-            // גלול לסוף כדי שהצומת הנוכחי תמיד נראה
+
+            // Auto-scroll to the end (the newest item)
             bar.scrollLeft = bar.scrollWidth;
         }
 
@@ -414,20 +551,13 @@
             document.getElementById("panel-text").innerHTML = data.text || "אין מידע זמין.";
             const panelImg = document.getElementById("panel-image");
             const imageUrl = data.panelImage ? data.panelImage.trim() : "";
-            if (imageUrl !== "") {
-                panelImg.src = imageUrl;
-                panelImg.style.display = "block";
-            } else {
-                panelImg.style.display = "none";
-            }
+            if (imageUrl !== "") { panelImg.src = imageUrl; panelImg.style.display = "block"; }
+            else { panelImg.style.display = "none"; }
             const videoContainer = document.getElementById("panel-video");
             if (data.video && data.video.trim() !== "") {
                 videoContainer.innerHTML = `<iframe width="100%" height="250" src="${data.video}" frameborder="0" allowfullscreen></iframe>`;
-            } else {
-                videoContainer.innerHTML = "";
-            }
+            } else { videoContainer.innerHTML = ""; }
             document.getElementById("info-panel").classList.add("open");
-            // זוז שמאלה אחרי שהפאנל נפתח (0.45s = משך האנימציה)
             if (!isMobile) setTimeout(() => {
                 const nodes = isFullMode ? allNodes : (simulation ? simulation.nodes() : []);
                 if (nodes.length) fitToNodes(nodes);
@@ -438,7 +568,6 @@
             document.getElementById("info-panel").classList.remove("open");
             document.getElementById("panel-video").innerHTML = "";
             document.getElementById("panel-image").src = "";
-            // חזור למרכז המסך המלא אחרי שהפאנל נסגר
             if (!isMobile) setTimeout(() => {
                 const nodes = isFullMode ? allNodes : (simulation ? simulation.nodes() : []);
                 if (nodes.length) fitToNodes(nodes);
@@ -478,6 +607,7 @@
                 if (allNodes.length > 0) {
                     const largestNode = allNodes.reduce((max, node) => node.radius > max.radius ? node : max);
                     currentCenterId = largestNode.id;
+                    markVisited(largestNode.id);
                     updateGraph(currentCenterId);
                     pushBreadcrumb(largestNode);
                     openPanel(largestNode);
@@ -486,7 +616,7 @@
                 loader.style.opacity = "0";
                 setTimeout(() => loader.style.display = "none", 500);
             })
-            .catch(error => { errorMessage.style.display = "block"; loader.style.display = "none"; });
+            .catch(() => { errorMessage.style.display = "block"; loader.style.display = "none"; });
 
         function updateGraph(centerNodeId) {
             let activeLinks = allLinks.filter(l => (l.source.id || l.source) === centerNodeId || (l.target.id || l.target) === centerNodeId);
@@ -502,42 +632,24 @@
 
             const nodeSelection = nodesGroup.selectAll(".node").data(activeNodes, d => d.id);
             const nodeEnter = nodeSelection.enter().append("g")
-                .attr("class", "node")
-                .attr("opacity", 0)
+                .attr("class", "node").attr("opacity", 0)
                 .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
 
-            nodeEnter.append("circle")
-                .attr("r", 0)
-                .attr("fill", d => d.color || primaryColor)
-                .on("click", (e, d) => handleNodeClick(d));
-
-            nodeEnter.append("image")
-                .attr("href", d => d.image ? d.image.trim() : "")
-                .attr("clip-path", "url(#circle-clip)")
-                .attr("preserveAspectRatio", "xMidYMid slice")
-                .style("pointer-events", "none");
-
-            nodeEnter.append("text").attr("dy", d => d.radius + 20).attr("text-anchor", "middle").text(d => d.id);
+            buildNodeGroup(nodeEnter, centerNodeId);
 
             const nodeElements = nodeEnter.merge(nodeSelection);
-            nodeElements.transition().duration(500).attr("opacity", 1);
-            nodeElements.select("circle").transition().duration(500).attr("r", d => d.id === centerNodeId ? d.radius * 1.3 : d.radius);
-            nodeElements.select("text").transition().duration(500).attr("dy", d => d.id === centerNodeId ? d.radius * 1.3 + 20 : d.radius + 20);
-
-            nodeElements.select("image").transition().duration(500)
-                .attr("x", d => d.id === centerNodeId ? -d.radius * 1.3 : -d.radius)
-                .attr("y", d => d.id === centerNodeId ? -d.radius * 1.3 : -d.radius)
-                .attr("width", d => d.id === centerNodeId ? d.radius * 2.6 : d.radius * 2)
-                .attr("height", d => d.id === centerNodeId ? d.radius * 2.6 : d.radius * 2);
-
+            applyNodeTransitions(nodeElements, centerNodeId);
             nodeSelection.exit().remove();
 
             simulation.nodes(activeNodes);
             simulation.force("link").links(activeLinks);
+            simulation.force("charge", d3.forceManyBody().strength(-600 * radiusScale));
+            simulation.force("collide", d3.forceCollide().radius(d => d.radius + 30));
             simulation.alpha(1).restart();
 
             simulation.on("tick", () => {
-                linkElements.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                linkElements.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                             .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
                 nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
             });
             simulation.on("end.fit", () => { fitToNodes(activeNodes); simulation.on("end.fit", null); });
@@ -547,7 +659,6 @@
             if (nodes.length === 0) return;
             const padding = isMobile ? 30 : 100;
 
-            // כשהפאנל פתוח ב-PC, מרכז הגרף בתוך האזור הנראה משמאל לפאנל
             const panelOpen = !isMobile && document.getElementById("info-panel").classList.contains("open");
             const panelWidth = panelOpen ? Math.min(600, window.innerWidth) : 0;
             const availableWidth = window.innerWidth - panelWidth;
@@ -564,30 +675,30 @@
             let calculatedScale = fillRatio / Math.max(graphW / availableWidth, graphH / window.innerHeight);
             let scale = Math.max(0.3, Math.min(1.2, calculatedScale));
 
-            // מרכז את הגרף בתוך האזור הנראה (שמאל לפאנל)
-            const centerX = availableWidth / 2;
-
             svg.transition().duration(800).ease(d3.easeCubicInOut).call(
                 zoom.transform,
                 d3.zoomIdentity
-                    .translate(centerX, window.innerHeight / 2)
+                    .translate(availableWidth / 2, window.innerHeight / 2)
                     .scale(scale)
                     .translate(-(minX + maxX) / 2, -(minY + maxY) / 2)
             );
         }
 
         function handleNodeClick(d) {
-            let connectionCount = allLinks.filter(l => (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id).length;
+            const connectionCount = allLinks.filter(l => (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id).length;
 
-            // עדכן פירורי לחם תמיד
+            markVisited(d.id);
+            // הצג וו מיידית על הצומת שנלחץ
+            nodesGroup.selectAll(".node").filter(n => n.id === d.id)
+                .select(".tick-mark").classed("visible", true);
+
             pushBreadcrumb(d);
 
             if (d.id !== currentCenterId && connectionCount > 1) {
                 currentCenterId = d.id;
-                // אם היינו במצב מלא, חזור למצב ממוקד
                 if (isFullMode) {
                     isFullMode = false;
-                    document.getElementById("toggle-mode-btn").textContent = "🕸 הצג את כל הגרף";
+                    document.getElementById("toggle-mode-btn").textContent = "הצג את כל הנקודות 🕸 ";
                     document.getElementById("toggle-mode-btn").classList.remove("full-mode");
                 }
                 updateGraph(currentCenterId);
