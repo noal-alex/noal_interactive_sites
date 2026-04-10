@@ -95,20 +95,20 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #1e1e2f; /* Matches your body background */
+            background-color: #1e1e2f;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 2000; /* Stays above everything */
-            transition: opacity 0.5s ease; /* Smooth fade out */
+            z-index: 2000;
+            transition: opacity 0.5s ease;
         }
 
         .spinner {
             width: 60px;
             height: 60px;
-            border: 6px solid #2a2a40; /* Dimmer background ring */
-            border-top-color: #00f2fe; /* The bright spinning part */
+            border: 6px solid #2a2a40;
+            border-top-color: #00f2fe;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -130,7 +130,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background-color: rgba(255, 76, 76, 0.15); /* Soft red background */
+            background-color: rgba(255, 76, 76, 0.15);
             border: 2px solid #ff4c4c;
             color: #ff4c4c;
             padding: 20px 40px;
@@ -140,6 +140,16 @@
             z-index: 1500;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        /* --- PANEL IMAGE STYLES --- */
+        #panel-image {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: none; 
         }
     </style>
 </head>
@@ -178,7 +188,7 @@
 
         const svg = d3.select("#graph-container");
         const g = svg.append("g");
-        // Define a reusable circular clip path that scales to the element's bounding box
+        
         const defs = svg.append("defs");
         defs.append("clipPath")
             .attr("id", "circle-clip")
@@ -203,21 +213,16 @@
             document.getElementById("panel-title").innerText = data.id;
             document.getElementById("panel-text").innerHTML = data.text || "אין מידע זמין.";
             
-            // --- UPDATED IMAGE LOGIC: STRICT SEPARATION ---
             const panelImg = document.getElementById("panel-image");
-            
-            // This now ONLY checks for a 'panelImage' column in your Sheet.
-            // It completely ignores the 'image' column used for the circles.
             const imageUrl = data.panelImage ? data.panelImage.trim() : "";
             
             if (imageUrl !== "") {
                 panelImg.src = imageUrl;
-                panelImg.style.display = "block"; // Show the image
+                panelImg.style.display = "block"; 
             } else {
                 panelImg.src = "";
-                panelImg.style.display = "none"; // Hide if no specific panel image is provided
+                panelImg.style.display = "none"; 
             }
-            // -----------------------
 
             const videoContainer = document.getElementById("panel-video");
             if (data.video && data.video.trim() !== "") {
@@ -231,6 +236,9 @@
         function closePanel() {
             document.getElementById("info-panel").classList.remove("open");
             document.getElementById("panel-video").innerHTML = ""; 
+            
+            document.getElementById("panel-image").src = "";
+            document.getElementById("panel-image").style.display = "none";
         }
 
         let allNodes = [];
@@ -241,7 +249,7 @@
         const loader = document.getElementById("loader-container");
         const errorMessage = document.getElementById("error-message");
 
-       Promise.all([d3.csv(nodesCsvUrl), d3.csv(linksCsvUrl)])
+        Promise.all([d3.csv(nodesCsvUrl), d3.csv(linksCsvUrl)])
             .then(function(files) {
                 allNodes = files[0].map(d => {
                     d.id = d.id ? d.id.trim() : "";
@@ -268,21 +276,17 @@
                     updateGraph(currentCenterId);
                 }
 
-                // --- SUCCESS: FADE OUT LOADER ---
                 loader.style.opacity = "0";
                 setTimeout(() => {
                     loader.style.display = "none";
-                }, 500); // Wait for the 0.5s CSS transition to finish before hiding
+                }, 500); 
 
             })
             .catch(function(error) {
-                // --- ERROR: SHOW ERROR MESSAGE AND HIDE LOADER ---
                 console.error("שגיאה בטעינת נתונים (Error fetching data):", error);
                 loader.style.display = "none";
                 errorMessage.style.display = "block";
             });
-
-        // The function updateGraph(centerNodeId) { ... } should start right below this!
 
         function updateGraph(centerNodeId) {
             let activeLinks = allLinks.filter(l => (l.source.id || l.source) === centerNodeId || (l.target.id || l.target) === centerNodeId);
@@ -309,24 +313,24 @@
 
             nodeEnter.append("circle").attr("r", 0).attr("fill", d => d.color || "#4facfe").on("click", (e, d) => handleNodeClick(d));
 
-            // ADD THIS: Append the image on top of the circle
             nodeEnter.append("image")
-                .attr("href", d => d.image ? d.image.trim() : "") // Pulls from your Sheet
-                .attr("clip-path", "url(#circle-clip)") // Applies the perfect circle crop
-                .attr("preserveAspectRatio", "xMidYMid slice") // Ensures the image fills the circle without squishing
-                .style("pointer-events", "none"); // CRUCIAL: Allows clicks and hovers to pass through to the circle underneath
+                .attr("href", d => d.image ? d.image.trim() : "") 
+                .attr("clip-path", "url(#circle-clip)") 
+                .attr("preserveAspectRatio", "xMidYMid slice") 
+                .style("pointer-events", "none"); 
             
             nodeEnter.append("text").attr("dy", d => d.radius + 20).attr("text-anchor", "middle").text(d => d.id).style("opacity", 0);
 
             const nodeElements = nodeEnter.merge(nodeSelection);
             nodeElements.transition().duration(500).attr("opacity", 1);
             nodeElements.select("circle").transition().duration(500).attr("r", d => d.id === centerNodeId ? d.radius * 1.4 : d.radius);
-            // ADD THIS: Animate the image size and position
+            
             nodeElements.select("image").transition().duration(500)
                 .attr("x", d => d.id === centerNodeId ? -d.radius * 1.4 : -d.radius)
                 .attr("y", d => d.id === centerNodeId ? -d.radius * 1.4 : -d.radius)
                 .attr("width", d => d.id === centerNodeId ? d.radius * 2.8 : d.radius * 2)
                 .attr("height", d => d.id === centerNodeId ? d.radius * 2.8 : d.radius * 2);
+            
             nodeElements.select("text").transition().duration(500).attr("dy", d => (d.id === centerNodeId ? d.radius * 1.4 : d.radius) + 25).style("opacity", 1);
 
             nodeSelection.exit().transition().duration(300).attr("opacity", 0).remove();
@@ -340,26 +344,22 @@
                 nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
             });
 
-            // --- SMART ZOOM LOGIC ---
-            // We wait a tiny bit for the simulation to start spreading nodes, then fit to screen
             setTimeout(() => fitToNodes(activeNodes), 100);
         }
 
         function fitToNodes(nodes) {
             if (nodes.length === 0) return;
 
-            // Calculate the bounding box of the active nodes
             let minX = d3.min(nodes, d => d.x - d.radius - 50);
             let maxX = d3.max(nodes, d => d.x + d.radius + 50);
             let minY = d3.min(nodes, d => d.y - d.radius - 50);
-            let maxY = d3.max(nodes, d => d.y + d.radius + 80); // Extra space for labels
+            let maxY = d3.max(nodes, d => d.y + d.radius + 80); 
 
             let graphW = maxX - minX;
             let graphH = maxY - minY;
             let centerX = (minX + maxX) / 2;
             let centerY = (minY + maxY) / 2;
 
-            // Fills ~65% of the screen
             let scale = 0.65 / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
             
             svg.transition().duration(800).ease(d3.easeCubicInOut).call(
