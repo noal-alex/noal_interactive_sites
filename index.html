@@ -272,8 +272,17 @@
                     .alphaDecay(0.07);
 
                 if (allNodes.length > 0) {
-                    currentCenterId = allNodes[0].id;
+                    // 1. Find the node with the highest radius value
+                    const largestNode = allNodes.reduce((maxNode, currentNode) => 
+                        currentNode.radius > maxNode.radius ? currentNode : maxNode
+                    );
+
+                    // 2. Center the graph on this largest node
+                    currentCenterId = largestNode.id;
                     updateGraph(currentCenterId);
+
+                    // 3. Tell the side panel to open immediately with its data
+                    openPanel(largestNode);
                 }
 
                 loader.style.opacity = "0";
@@ -373,13 +382,15 @@
 
         function handleNodeClick(d) {
             let connectionCount = allLinks.filter(l => (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id).length;
+            
+            // 1. If it's a main node that isn't already centered, run the animation to center it
             if (d.id !== currentCenterId && connectionCount > 1) {
                 currentCenterId = d.id;
                 updateGraph(currentCenterId);
-                closePanel(); 
-            } else {
-                openPanel(d);
             }
+            
+            // 2. ALWAYS open the panel with the clicked node's information
+            openPanel(d);
         }
 
         function dragstarted(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
