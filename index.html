@@ -522,6 +522,7 @@
             const nodeElements = nodeEnter.merge(nodeSelection);
             nodeElements.transition().duration(500).attr("opacity", 1);
             nodeElements.select("circle").transition().duration(500).attr("r", d => d.id === centerNodeId ? d.radius * 1.3 : d.radius);
+            nodeElements.select("text").transition().duration(500).attr("dy", d => d.id === centerNodeId ? d.radius * 1.3 + 20 : d.radius + 20);
 
             nodeElements.select("image").transition().duration(500)
                 .attr("x", d => d.id === centerNodeId ? -d.radius * 1.3 : -d.radius)
