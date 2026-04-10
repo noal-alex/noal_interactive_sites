@@ -6,20 +6,16 @@
     <title>שוק האנרגיה והמלחמה - Interactive Map</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        /* --- פלטת צבעים מרכזית --- */
         :root {
-            /* Copy and paste this into your :root section */
-            --bg-main: #2b2529;           /* Deep Mocha */
-            --bg-panel: #3d353c;          /* Warm Taupe */
-            --text-main: #ffffff;         /* Pure white for readability */
-            --text-dim: #f0e6d6;          /* Creamy off-white */
-            
-            --primary: #e0b777;           /* Wheat Gold (from logo) */
-            --secondary: #f2e7c4;         /* Soft Gold glow */
-            --danger: #ff4c4c;            
+            --bg-main: #2b2529;
+            --bg-panel: #3d353c;
+            --text-main: #ffffff;
+            --text-dim: #f0e6d6;
+            --primary: #e0b777;
+            --secondary: #f2e7c4;
+            --danger: #ff4c4c;
             --danger-hover: #ff1c1c;
-            
-            --link-color: #8c8279;        /* Warm gray lines */
+            --link-color: #8c8279;
             --loader-border: #3d353c;
         }
 
@@ -31,18 +27,15 @@
             overflow: hidden;
             cursor: grab;
         }
-        
-        body:active {
-            cursor: grabbing;
-        }
+        body:active { cursor: grabbing; }
 
         /* --- פאנל מידע --- */
         #info-panel {
             position: absolute;
             top: 0;
-            right: -100%; 
-            width: 600px; 
-            max-width: 100%; 
+            right: -100%;
+            width: 600px;
+            max-width: 100%;
             height: 100vh;
             background-color: var(--bg-panel);
             box-shadow: -5px 0 15px rgba(0,0,0,0.5);
@@ -52,29 +45,26 @@
             z-index: 1000;
             overflow-y: auto;
         }
-
         #info-panel.open { right: 0; }
-        
-        h2 { 
-            margin-top: 0; 
-            color: var(--primary); 
-            font-size: 26px; 
-            line-height: 1.2; 
-            border-bottom: 2px solid var(--primary); 
-            padding-bottom: 10px; 
-        }
 
-        #panel-text { 
-            line-height: 1.8; 
-            font-size: 17px; 
-            color: var(--text-dim); 
-            margin-top: 20px; 
+        h2 {
+            margin-top: 0;
+            color: var(--primary);
+            font-size: 26px;
+            line-height: 1.2;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
         }
-        
+        #panel-text {
+            line-height: 1.8;
+            font-size: 17px;
+            color: var(--text-dim);
+            margin-top: 20px;
+        }
         #panel-text b { color: var(--primary); }
         p a { color: var(--secondary); text-decoration: none; font-weight: bold; }
         p a:hover { text-decoration: underline; }
-        
+
         .close-btn {
             background-color: var(--danger);
             color: white;
@@ -95,20 +85,17 @@
             stroke-width: 2px;
             transition: fill 0.2s, stroke-width 0.2s;
         }
-        
-        .node circle:hover { 
-            fill: var(--secondary) !important; 
+        .node circle:hover {
+            fill: var(--secondary) !important;
             stroke-width: 4px;
         }
-        
         .node text {
             font-size: 14px;
             fill: white;
-            pointer-events: none; 
+            pointer-events: none;
             font-weight: bold;
             text-shadow: 1px 1px 4px black, -1px -1px 4px black;
         }
-        
         .link {
             stroke: var(--link-color);
             stroke-opacity: 0.4;
@@ -123,10 +110,8 @@
         /* --- מסך טעינה --- */
         #loader-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background-color: var(--bg-main);
             display: flex;
             flex-direction: column;
@@ -135,32 +120,20 @@
             z-index: 2000;
             transition: opacity 0.5s ease;
         }
-
         .spinner {
-            width: 60px;
-            height: 60px;
+            width: 60px; height: 60px;
             border: 6px solid var(--loader-border);
             border-top-color: var(--secondary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
-        .loader-text {
-            margin-top: 20px;
-            color: var(--primary);
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        .loader-text { margin-top: 20px; color: var(--primary); font-size: 18px; font-weight: bold; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* --- הודעת שגיאה --- */
         #error-message {
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             background-color: rgba(255, 76, 76, 0.15);
             border: 2px solid var(--danger);
@@ -175,20 +148,100 @@
         }
 
         #panel-image {
-            max-width: 100%;
-            max-height: 350px;
-            width: auto;
-            margin-top: 20px;
-            border-radius: 8px;
+            max-width: 100%; max-height: 350px; width: auto;
+            margin-top: 20px; border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            display: none; 
-            object-fit: contain;
+            display: none; object-fit: contain;
+        }
+
+        /* =============================================
+           חדש: כפתור מצב מלא + פירורי לחם
+        ============================================= */
+
+        /* כפתור Toggle */
+        #toggle-mode-btn {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            background-color: var(--bg-panel);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 10px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            transition: background 0.2s, color 0.2s, transform 0.15s;
+            white-space: nowrap;
+        }
+        #toggle-mode-btn:hover {
+            background-color: var(--primary);
+            color: var(--bg-main);
+            transform: translateX(-50%) scale(1.05);
+        }
+        #toggle-mode-btn.full-mode {
+            background-color: var(--primary);
+            color: var(--bg-main);
+        }
+
+        /* פירורי לחם */
+        #breadcrumb-bar {
+            position: absolute;
+            top: 18px;
+            right: 50%;
+            transform: translateX(50%);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background-color: rgba(43, 37, 41, 0.75);
+            border: 1px solid rgba(224, 183, 119, 0.35);
+            border-radius: 30px;
+            padding: 7px 18px;
+            backdrop-filter: blur(4px);
+            max-width: calc(100vw - 280px);
+            overflow-x: auto;
+            scrollbar-width: none;
+            flex-direction: row-reverse;
+        }
+        #breadcrumb-bar::-webkit-scrollbar { display: none; }
+
+        .bc-item {
+            color: rgba(240, 230, 214, 0.6);
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            padding: 2px 6px;
+            border-radius: 20px;
+            transition: color 0.2s, background 0.2s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .bc-item:hover {
+            color: var(--primary);
+            background-color: rgba(224, 183, 119, 0.1);
+        }
+        .bc-item.bc-current {
+            color: var(--primary);
+            font-weight: bold;
+            cursor: default;
+            background: none;
+        }
+        .bc-separator {
+            color: rgba(224, 183, 119, 0.35);
+            font-size: 13px;
+            user-select: none;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <img src="https://raw.githubusercontent.com/noal-alex/noal_interactive_sites/refs/heads/main/assets/logo_100.png" 
-         alt="לוגו התנועה" 
+    <img src="https://raw.githubusercontent.com/noal-alex/noal_interactive_sites/refs/heads/main/assets/logo_100.png"
+         alt="לוגו התנועה"
          style="position: absolute; top: 20px; left: 20px; width: 220px; max-width: 35%; z-index: 100;">
 
     <div id="loader-container">
@@ -199,52 +252,165 @@
     <div id="error-message" style="display: none;">
         שגיאה בטעינת הנתונים. אנא רענן את העמוד או נסה שוב מאוחר יותר.
     </div>
-    
+
+    <!-- פירורי לחם -->
+    <div id="breadcrumb-bar"></div>
+
     <svg id="graph-container" width="100vw" height="100vh"></svg>
+
+    <!-- כפתור מצב מלא -->
+    <button id="toggle-mode-btn" onclick="toggleMode()">🕸 הצג את כל הגרף</button>
 
     <div id="info-panel">
         <button class="close-btn" onclick="closePanel()">סגור X</button>
         <h2 id="panel-title" style="margin-top: 50px;">נושא</h2>
         <div id="panel-text">מידע יופיע כאן.</div>
-        
         <img id="panel-image" src="" alt="תמונת נושא">
-        
         <div id="panel-video" style="margin-top: 25px;"></div>
     </div>
 
     <script>
-        // שליפת צבעים מה-CSS Variables לטובת ה-JavaScript
         const cssVars = getComputedStyle(document.documentElement);
         const primaryColor = cssVars.getPropertyValue('--primary').trim();
         const secondaryColor = cssVars.getPropertyValue('--secondary').trim();
 
-        const nodesCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTuF0csf_5-brKojkg2-AHN76hTmbAv6c8Whw3fcWAGpf-0-gRqGC5bCFnD_ogBN5VMG0Y4ZQa-u5I/pub?gid=0&single=true&output=csv"; 
+        const nodesCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTuF0csf_5-brKojkg2-AHN76hTmbAv6c8Whw3fcWAGpf-0-gRqGC5bCFnD_ogBN5VMG0Y4ZQa-u5I/pub?gid=0&single=true&output=csv";
         const linksCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTuF0csf_5-brKojkg2-AHN76hTmbAv6c8Whw3fcWAGpf-0-gRqGC5bCFnD_ogBN5VMG0Y4ZQa-u5I/pub?gid=389930858&single=true&output=csv";
-    
+
         let width = window.innerWidth;
         let height = window.innerHeight;
         let isMobile = window.innerWidth <= 768;
-        let radiusScale = isMobile ? 1.3 : 1; 
-    
+        let radiusScale = isMobile ? 1.3 : 1;
+
         const svg = d3.select("#graph-container");
         const g = svg.append("g");
-        
+
         const defs = svg.append("defs");
         defs.append("clipPath")
             .attr("id", "circle-clip")
             .attr("clipPathUnits", "objectBoundingBox")
             .append("circle")
             .attr("cx", 0.5).attr("cy", 0.5).attr("r", 0.5);
-        
+
         const zoom = d3.zoom()
             .scaleExtent([0.1, 4])
             .on("zoom", (event) => { g.attr("transform", event.transform); });
-            
+
         svg.call(zoom);
-        
+
         const linksGroup = g.append("g").attr("class", "links");
         const nodesGroup = g.append("g").attr("class", "nodes");
-    
+
+        /* =============================================
+           מצב תצוגה + פירורי לחם - משתנים חדשים
+        ============================================= */
+        let isFullMode = false;
+        let navHistory = [];   // מערך של { id, data } לנווט אחורה
+
+        function toggleMode() {
+            isFullMode = !isFullMode;
+            const btn = document.getElementById("toggle-mode-btn");
+            if (isFullMode) {
+                btn.textContent = "🎯 חזור למצב ממוקד";
+                btn.classList.add("full-mode");
+                showFullGraph();
+            } else {
+                btn.textContent = "🕸 הצג את כל הגרף";
+                btn.classList.remove("full-mode");
+                updateGraph(currentCenterId);
+            }
+        }
+
+        function showFullGraph() {
+            const linkSelection = linksGroup.selectAll(".link").data(allLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
+            const linkElements = linkSelection.join("line").attr("class", "link").attr("stroke-opacity", 0.6);
+
+            const nodeSelection = nodesGroup.selectAll(".node").data(allNodes, d => d.id);
+            const nodeEnter = nodeSelection.enter().append("g")
+                .attr("class", "node")
+                .attr("opacity", 0)
+                .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
+
+            nodeEnter.append("circle")
+                .attr("r", 0)
+                .attr("fill", d => d.color || primaryColor)
+                .on("click", (e, d) => handleNodeClick(d));
+
+            nodeEnter.append("image")
+                .attr("href", d => d.image ? d.image.trim() : "")
+                .attr("clip-path", "url(#circle-clip)")
+                .attr("preserveAspectRatio", "xMidYMid slice")
+                .style("pointer-events", "none");
+
+            nodeEnter.append("text").attr("dy", d => d.radius + 20).attr("text-anchor", "middle").text(d => d.id);
+
+            const nodeElements = nodeEnter.merge(nodeSelection);
+            nodeElements.transition().duration(500).attr("opacity", 1);
+            nodeElements.select("circle").transition().duration(500).attr("r", d => d.radius);
+            nodeElements.select("image").transition().duration(500)
+                .attr("x", d => -d.radius).attr("y", d => -d.radius)
+                .attr("width", d => d.radius * 2).attr("height", d => d.radius * 2);
+
+            nodeSelection.exit().remove();
+
+            simulation.nodes(allNodes);
+            simulation.force("link").links(allLinks);
+            simulation.alpha(1).restart();
+
+            simulation.on("tick", () => {
+                linkElements.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+                             .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+            setTimeout(() => fitToNodes(allNodes), 250);
+        }
+
+        /* --- פירורי לחם --- */
+        function pushBreadcrumb(nodeData) {
+            // אם לחצו על צומת שכבר בהיסטוריה – קצר אליה
+            const existingIdx = navHistory.findIndex(h => h.id === nodeData.id);
+            if (existingIdx !== -1) {
+                navHistory = navHistory.slice(0, existingIdx + 1);
+            } else {
+                navHistory.push({ id: nodeData.id, data: nodeData });
+            }
+            renderBreadcrumb();
+        }
+
+        function renderBreadcrumb() {
+            const bar = document.getElementById("breadcrumb-bar");
+            bar.innerHTML = "";
+            navHistory.forEach((item, idx) => {
+                const isLast = idx === navHistory.length - 1;
+                const span = document.createElement("span");
+                span.className = "bc-item" + (isLast ? " bc-current" : "");
+                span.textContent = item.id;
+                if (!isLast) {
+                    span.addEventListener("click", () => {
+                        navHistory = navHistory.slice(0, idx + 1);
+                        renderBreadcrumb();
+                        currentCenterId = item.id;
+                        isFullMode = false;
+                        document.getElementById("toggle-mode-btn").textContent = "🕸 הצג את כל הגרף";
+                        document.getElementById("toggle-mode-btn").classList.remove("full-mode");
+                        updateGraph(currentCenterId);
+                        openPanel(item.data);
+                    });
+                }
+                bar.appendChild(span);
+                if (idx < navHistory.length - 1) {
+                    const sep = document.createElement("span");
+                    sep.className = "bc-separator";
+                    sep.textContent = "←";
+                    bar.appendChild(sep);
+                }
+            });
+            // גלול לסוף (לצומת האחרון) – מימין בRTL
+            bar.scrollLeft = 0;
+        }
+
+        /* --- פאנל --- */
         function openPanel(data) {
             document.getElementById("panel-title").innerText = data.id;
             document.getElementById("panel-text").innerHTML = data.text || "אין מידע זמין.";
@@ -252,9 +418,9 @@
             const imageUrl = data.panelImage ? data.panelImage.trim() : "";
             if (imageUrl !== "") {
                 panelImg.src = imageUrl;
-                panelImg.style.display = "block"; 
+                panelImg.style.display = "block";
             } else {
-                panelImg.style.display = "none"; 
+                panelImg.style.display = "none";
             }
             const videoContainer = document.getElementById("panel-video");
             if (data.video && data.video.trim() !== "") {
@@ -264,21 +430,21 @@
             }
             document.getElementById("info-panel").classList.add("open");
         }
-    
+
         function closePanel() {
             document.getElementById("info-panel").classList.remove("open");
-            document.getElementById("panel-video").innerHTML = ""; 
+            document.getElementById("panel-video").innerHTML = "";
             document.getElementById("panel-image").src = "";
         }
-    
+
         let allNodes = [];
         let allLinks = [];
         let simulation;
         let currentCenterId = null;
-    
+
         const loader = document.getElementById("loader-container");
         const errorMessage = document.getElementById("error-message");
-    
+
         Promise.all([d3.csv(nodesCsvUrl), d3.csv(linksCsvUrl)])
             .then(function(files) {
                 allNodes = files[0].map(d => {
@@ -286,33 +452,34 @@
                     d.radius = (+d.radius || 30) * radiusScale;
                     return d;
                 }).filter(d => d.id !== "");
-    
+
                 let validNodeIds = new Set(allNodes.map(n => n.id));
                 allLinks = files[1].map(d => {
                     d.source = d.source ? d.source.trim() : "";
                     d.target = d.target ? d.target.trim() : "";
                     return d;
                 }).filter(d => validNodeIds.has(d.source) && validNodeIds.has(d.target));
-    
+
                 simulation = d3.forceSimulation()
                     .force("link", d3.forceLink().id(d => d.id).distance(150 * radiusScale))
                     .force("charge", d3.forceManyBody().strength(-600 * radiusScale))
                     .force("center", d3.forceCenter(width / 2, height / 2))
                     .force("collide", d3.forceCollide().radius(d => d.radius + 30))
                     .alphaDecay(0.05);
-    
+
                 if (allNodes.length > 0) {
                     const largestNode = allNodes.reduce((max, node) => node.radius > max.radius ? node : max);
                     currentCenterId = largestNode.id;
                     updateGraph(currentCenterId);
+                    pushBreadcrumb(largestNode);
                     openPanel(largestNode);
                 }
-    
+
                 loader.style.opacity = "0";
-                setTimeout(() => loader.style.display = "none", 500); 
+                setTimeout(() => loader.style.display = "none", 500);
             })
             .catch(error => { errorMessage.style.display = "block"; loader.style.display = "none"; });
-    
+
         function updateGraph(centerNodeId) {
             let activeLinks = allLinks.filter(l => (l.source.id || l.source) === centerNodeId || (l.target.id || l.target) === centerNodeId);
             let activeNodeIds = new Set([centerNodeId]);
@@ -321,92 +488,101 @@
                 activeNodeIds.add(l.target.id || l.target);
             });
             let activeNodes = allNodes.filter(n => activeNodeIds.has(n.id));
-    
+
             const linkSelection = linksGroup.selectAll(".link").data(activeLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
             const linkElements = linkSelection.join("line").attr("class", "link").attr("stroke-opacity", 0.6);
-    
+
             const nodeSelection = nodesGroup.selectAll(".node").data(activeNodes, d => d.id);
             const nodeEnter = nodeSelection.enter().append("g")
                 .attr("class", "node")
                 .attr("opacity", 0)
                 .call(d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended));
-    
-            // משתמש בצבע הראשי מה-CSS אם לא הוגדר צבע ספציפי בגיליון
+
             nodeEnter.append("circle")
                 .attr("r", 0)
-                .attr("fill", d => d.color || primaryColor) 
+                .attr("fill", d => d.color || primaryColor)
                 .on("click", (e, d) => handleNodeClick(d));
 
             nodeEnter.append("image")
-                .attr("href", d => d.image ? d.image.trim() : "") 
-                .attr("clip-path", "url(#circle-clip)") 
-                .attr("preserveAspectRatio", "xMidYMid slice") 
-                .style("pointer-events", "none"); 
-            
+                .attr("href", d => d.image ? d.image.trim() : "")
+                .attr("clip-path", "url(#circle-clip)")
+                .attr("preserveAspectRatio", "xMidYMid slice")
+                .style("pointer-events", "none");
+
             nodeEnter.append("text").attr("dy", d => d.radius + 20).attr("text-anchor", "middle").text(d => d.id);
-    
+
             const nodeElements = nodeEnter.merge(nodeSelection);
             nodeElements.transition().duration(500).attr("opacity", 1);
             nodeElements.select("circle").transition().duration(500).attr("r", d => d.id === centerNodeId ? d.radius * 1.3 : d.radius);
-            
+
             nodeElements.select("image").transition().duration(500)
                 .attr("x", d => d.id === centerNodeId ? -d.radius * 1.3 : -d.radius)
                 .attr("y", d => d.id === centerNodeId ? -d.radius * 1.3 : -d.radius)
                 .attr("width", d => d.id === centerNodeId ? d.radius * 2.6 : d.radius * 2)
                 .attr("height", d => d.id === centerNodeId ? d.radius * 2.6 : d.radius * 2);
-    
+
             nodeSelection.exit().remove();
-    
+
             simulation.nodes(activeNodes);
             simulation.force("link").links(activeLinks);
             simulation.alpha(1).restart();
-    
+
             simulation.on("tick", () => {
                 linkElements.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
                 nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
             });
-    
+
             setTimeout(() => fitToNodes(activeNodes), 250);
         }
-    
+
         function fitToNodes(nodes) {
             if (nodes.length === 0) return;
             const padding = isMobile ? 30 : 100;
-            
+
             let minX = d3.min(nodes, d => d.x - d.radius - padding);
             let maxX = d3.max(nodes, d => d.x + d.radius + padding);
             let minY = d3.min(nodes, d => d.y - d.radius - padding);
-            let maxY = d3.max(nodes, d => d.y + d.radius + (padding + 40)); 
-    
+            let maxY = d3.max(nodes, d => d.y + d.radius + (padding + 40));
+
             let graphW = maxX - minX;
             let graphH = maxY - minY;
-            
+
             let fillRatio = isMobile ? 0.95 : 0.7;
             let calculatedScale = fillRatio / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
             let scale = Math.max(0.3, Math.min(1.1, calculatedScale));
-            
+
             svg.transition().duration(800).ease(d3.easeCubicInOut).call(
-                zoom.transform, 
+                zoom.transform,
                 d3.zoomIdentity
                     .translate(window.innerWidth / 2, window.innerHeight / 2)
                     .scale(scale)
                     .translate(-(minX + maxX) / 2, -(minY + maxY) / 2)
             );
         }
-    
+
         function handleNodeClick(d) {
             let connectionCount = allLinks.filter(l => (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id).length;
+
+            // עדכן פירורי לחם תמיד
+            pushBreadcrumb(d);
+
             if (d.id !== currentCenterId && connectionCount > 1) {
                 currentCenterId = d.id;
+                // אם היינו במצב מלא, חזור למצב ממוקד
+                if (isFullMode) {
+                    isFullMode = false;
+                    document.getElementById("toggle-mode-btn").textContent = "🕸 הצג את כל הגרף";
+                    document.getElementById("toggle-mode-btn").classList.remove("full-mode");
+                }
                 updateGraph(currentCenterId);
             }
             openPanel(d);
         }
-    
+
         function dragstarted(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
         function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
         function dragended(e, d) { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
-    
+
         window.addEventListener("resize", () => {
             width = window.innerWidth; height = window.innerHeight;
             isMobile = width <= 768;
