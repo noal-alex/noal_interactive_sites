@@ -207,7 +207,6 @@
             max-width: calc(100vw - 280px);
             overflow-x: auto;
             scrollbar-width: none;
-            flex-direction: row-reverse;
         }
         #breadcrumb-bar::-webkit-scrollbar { display: none; }
 
@@ -362,8 +361,7 @@
                              .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
                 nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
             });
-
-            setTimeout(() => fitToNodes(allNodes), 250);
+            simulation.on("end.fit", () => { fitToNodes(allNodes); simulation.on("end.fit", null); });
         }
 
         /* --- פירורי לחם --- */
@@ -406,8 +404,8 @@
                     bar.appendChild(sep);
                 }
             });
-            // גלול לסוף (לצומת האחרון) – מימין בRTL
-            bar.scrollLeft = 0;
+            // גלול לסוף כדי שהצומת הנוכחי תמיד נראה
+            bar.scrollLeft = bar.scrollWidth;
         }
 
         /* --- פאנל --- */
@@ -429,12 +427,22 @@
                 videoContainer.innerHTML = "";
             }
             document.getElementById("info-panel").classList.add("open");
+            // זוז שמאלה אחרי שהפאנל נפתח (0.45s = משך האנימציה)
+            if (!isMobile) setTimeout(() => {
+                const nodes = isFullMode ? allNodes : (simulation ? simulation.nodes() : []);
+                if (nodes.length) fitToNodes(nodes);
+            }, 450);
         }
 
         function closePanel() {
             document.getElementById("info-panel").classList.remove("open");
             document.getElementById("panel-video").innerHTML = "";
             document.getElementById("panel-image").src = "";
+            // חזור למרכז המסך המלא אחרי שהפאנל נסגר
+            if (!isMobile) setTimeout(() => {
+                const nodes = isFullMode ? allNodes : (simulation ? simulation.nodes() : []);
+                if (nodes.length) fitToNodes(nodes);
+            }, 450);
         }
 
         let allNodes = [];
@@ -531,13 +539,17 @@
                 linkElements.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
                 nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
             });
-
-            setTimeout(() => fitToNodes(activeNodes), 250);
+            simulation.on("end.fit", () => { fitToNodes(activeNodes); simulation.on("end.fit", null); });
         }
 
         function fitToNodes(nodes) {
             if (nodes.length === 0) return;
             const padding = isMobile ? 30 : 100;
+
+            // כשהפאנל פתוח ב-PC, מרכז הגרף בתוך האזור הנראה משמאל לפאנל
+            const panelOpen = !isMobile && document.getElementById("info-panel").classList.contains("open");
+            const panelWidth = panelOpen ? Math.min(600, window.innerWidth) : 0;
+            const availableWidth = window.innerWidth - panelWidth;
 
             let minX = d3.min(nodes, d => d.x - d.radius - padding);
             let maxX = d3.max(nodes, d => d.x + d.radius + padding);
@@ -547,14 +559,17 @@
             let graphW = maxX - minX;
             let graphH = maxY - minY;
 
-            let fillRatio = isMobile ? 0.95 : 0.7;
-            let calculatedScale = fillRatio / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
-            let scale = Math.max(0.3, Math.min(1.1, calculatedScale));
+            let fillRatio = isMobile ? 0.95 : 0.75;
+            let calculatedScale = fillRatio / Math.max(graphW / availableWidth, graphH / window.innerHeight);
+            let scale = Math.max(0.3, Math.min(1.2, calculatedScale));
+
+            // מרכז את הגרף בתוך האזור הנראה (שמאל לפאנל)
+            const centerX = availableWidth / 2;
 
             svg.transition().duration(800).ease(d3.easeCubicInOut).call(
                 zoom.transform,
                 d3.zoomIdentity
-                    .translate(window.innerWidth / 2, window.innerHeight / 2)
+                    .translate(centerX, window.innerHeight / 2)
                     .scale(scale)
                     .translate(-(minX + maxX) / 2, -(minY + maxY) / 2)
             );
