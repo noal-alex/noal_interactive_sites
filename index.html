@@ -280,7 +280,6 @@
                 currentCenterId = allNodes[0].id;
                 updateGraph(currentCenterId);
             }
-        });
 
         function updateGraph(centerNodeId) {
             let activeLinks = allLinks.filter(l => (l.source.id || l.source) === centerNodeId || (l.target.id || l.target) === centerNodeId);
