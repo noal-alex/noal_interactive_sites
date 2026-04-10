@@ -383,8 +383,13 @@
         let centerX = (minX + maxX) / 2;
         let centerY = (minY + maxY) / 2;
     
-        // We change the scale from 0.65 to 0.5 to zoom out more
-        let scale = 0.5 / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
+        // Calculate the scale needed to fit the graph
+        let calculatedScale = 0.6 / Math.max(graphW / window.innerWidth, graphH / window.innerHeight);
+        
+        // CLAMP THE SCALE: 
+        // It won't zoom out more than 0.4 (stays relatively close)
+        // and won't zoom in more than 1.1 (prevents massive nodes on small graphs)
+        let scale = Math.max(0.4, Math.min(1.1, calculatedScale));
         
         svg.transition().duration(800).ease(d3.easeCubicInOut).call(
             zoom.transform, 
