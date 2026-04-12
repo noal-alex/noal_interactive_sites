@@ -7,6 +7,43 @@
     <title>שוק האנרגיה והמלחמה - Interactive Map</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+
+        :root {
+            /* New Dark Mode (Default) */
+            --bg-main: #13133d;             /* The brand Dark Blue */
+            --bg-panel: rgba(255, 255, 255, 0.05); /* Slight lightening for the panel over the dark blue */
+            --text-main: #ffffff;           /* Brand White */
+            --text-dim: rgba(255, 255, 255, 0.7);
+            --primary: #36c6f4;             /* Brand Light Blue (Pops great on dark backgrounds) */
+            --secondary: #e31e36;           /* Brand Red */
+            --danger: #e31e36;              /* Brand Red */
+            --danger-hover: #b81529;
+            --link-color: #36c6f4;          /* Brand Light Blue */
+            --loader-border: rgba(54, 198, 244, 0.2); 
+            --visited-tick: #36c6f4;
+            --modal-bg: rgba(19, 19, 61, 0.95); /* Dark Blue with slight transparency */
+            --font-main: 'Assistant', sans-serif;
+            --font-headers: 'Bellefair', serif;
+        }
+
+        /* New Light Mode */
+        [data-theme="light"] {
+            --bg-main: #ffffff;             /* Brand White */
+            --bg-panel: rgba(54, 198, 244, 0.05); /* Extremely subtle hint of light blue for the panel */
+            --text-main: #13133d;           /* Brand Dark Blue (Replaces black text) */
+            --text-dim: rgba(19, 19, 61, 0.7);
+            --primary: #e31e36;             /* Brand Red (Strong, classic primary for light mode) */
+            --secondary: #36c6f4;           /* Brand Light Blue */
+            --danger: #e31e36;              /* Brand Red */
+            --danger-hover: #b81529;
+            --link-color: #e31e36;          /* Brand Red */
+            --loader-border: rgba(19, 19, 61, 0.1);
+            --visited-tick: #e31e36;        /* Brand Red */
+            --modal-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        /* Dark Mode (Default) */
+        /*
         :root {
             --bg-main: #2b2529;
             --bg-panel: #3d353c;
@@ -19,20 +56,118 @@
             --link-color: #8c8279;
             --loader-border: #3d353c;
             --visited-tick: #7ed99b;
+            --modal-bg: rgba(43, 37, 41, 0.95);
             --font-main: 'Assistant', sans-serif;
-            --font-headers: 'Bellefair', serif; /* A classic, elegant look for titles */
+            --font-headers: 'Bellefair', serif;
+        } */
+
+        /* Light Mode - A clean, vintage paper aesthetic */
+        /*
+        [data-theme="light"] {
+            --bg-main: #f4f1ea;       
+            --bg-panel: #e8e3d9;      
+            --text-main: #2b2529;     
+            --text-dim: #4a4247;      
+            --primary: #b08133;       
+            --secondary: #8c7b66;     
+            --danger: #d93838;
+            --danger-hover: #b32d2d;
+            --link-color: #a89f93;
+            --loader-border: #d4cec4;
+            --visited-tick: #2e854d;  
+            --modal-bg: rgba(244, 241, 234, 0.95);
+        } */
+
+        /* --- Logo Theme Switching --- */
+        .site-logo {
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            width: 220px; 
+            max-width: 35%; 
+            z-index: 100;
+        }
+
+        /* By default (Dark Mode), hide the light logo */
+        #logo-light {
+            display: none;
+        }
+
+        /* When Light Mode is active, hide the dark logo and show the light one */
+        [data-theme="light"] #logo-dark {
+            display: none;
+        }
+        [data-theme="light"] #logo-light {
+            display: block;
         }
 
         body {
             margin: 0;
             background-color: var(--bg-main);
             color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-main);
             overflow: hidden;
             cursor: grab;
-            font-family: var(--font-main);
+            transition: background-color 0.3s, color 0.3s;
         }
         body:active { cursor: grabbing; }
+
+        /* --- Theme Toggle Button --- */
+        #theme-toggle-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1001; /* <-- Changed from 100 to 1001 */
+            background-color: var(--bg-panel);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: var(--font-main);
+            transition: all 0.2s;
+        }
+        #theme-toggle-btn:hover { background-color: var(--primary); color: var(--bg-main); }
+
+        /* --- Intro Modal --- */
+        #intro-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+        }
+        .intro-content {
+            background-color: var(--modal-bg);
+            border: 2px solid var(--primary);
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 600px;
+            width: 85%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .intro-content h2 { border-bottom: none; margin-bottom: 10px; }
+        .start-btn {
+            background-color: var(--primary);
+            color: var(--bg-main);
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            margin-top: 25px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            transition: transform 0.2s;
+        }
+        .start-btn:hover { transform: scale(1.05); }
 
         /* --- פאנל מידע --- */
         #info-panel {
@@ -44,7 +179,7 @@
             height: 100vh;
             background-color: var(--bg-panel);
             box-shadow: -5px 0 15px rgba(0,0,0,0.5);
-            transition: right 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: right 0.4s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s;
             padding: 30px;
             box-sizing: border-box;
             z-index: 1000;
@@ -91,7 +226,7 @@
         /* --- גרף D3 --- */
         .node circle {
             cursor: pointer;
-            stroke: #fff;
+            stroke: var(--bg-main);
             stroke-width: 2px;
             transition: fill 0.2s, stroke-width 0.2s;
         }
@@ -101,10 +236,11 @@
         }
         .node text {
             font-size: 14px;
-            fill: white;
+            fill: var(--text-main);
             pointer-events: none;
             font-weight: bold;
-            text-shadow: 1px 1px 4px black, -1px -1px 4px black;
+            text-shadow: 1px 1px 4px var(--bg-panel), -1px -1px 4px var(--bg-panel);
+            transition: fill 0.3s;
         }
         .node .tick-mark {
             font-size: 13px;
@@ -120,6 +256,7 @@
             stroke: var(--link-color);
             stroke-opacity: 0.4;
             stroke-width: 2px;
+            transition: stroke 0.3s;
         }
 
         @media (max-width: 768px) {
@@ -175,7 +312,7 @@
         }
 
         /* =============================================
-           כפתורים שמאל תחתון
+            כפתורים שמאל תחתון
         ============================================= */
         #toggle-mode-btn {
             position: absolute;
@@ -190,7 +327,7 @@
             cursor: pointer;
             font-size: 15px;
             font-weight: bold;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-main);
             letter-spacing: 0.5px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.4);
             transition: background 0.2s, color 0.2s, transform 0.15s;
@@ -218,7 +355,7 @@
             border-radius: 30px;
             cursor: pointer;
             font-size: 13px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-main);
             transition: color 0.2s, border-color 0.2s, background 0.2s;
             white-space: nowrap;
         }
@@ -228,7 +365,7 @@
             background-color: rgba(255, 76, 76, 0.08);
         }
 
-        /* פירורי לחם */
+        /* פירורי לחם 
         #breadcrumb-bar {
             position: absolute;
             top: 120px;
@@ -243,16 +380,14 @@
             border-radius: 30px;
             padding: 7px 18px;
             backdrop-filter: blur(4px);
-
-            /* The Safety Net */
-            max-width: 80vw;      /* Don't let it cover more than 80% of the screen */
-            overflow-x: auto;     /* Allow swiping if names are long */
-            white-space: nowrap;  /* Keep it all on one line */
-            scrollbar-width: none; /* Hide scrollbar for clean look */
+            max-width: 80vw;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
         }
 
         #breadcrumb-bar::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for Chrome/Safari */
+            display: none;
         }
 
         .bc-item {
@@ -263,7 +398,7 @@
             padding: 2px 6px;
             border-radius: 20px;
             transition: color 0.2s, background 0.2s;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: var(--font-main);
         }
         .bc-item:hover {
             color: var(--primary);
@@ -280,13 +415,26 @@
             font-size: 13px;
             user-select: none;
             pointer-events: none;
-        }
+        } */
     </style>
 </head>
 <body>
-    <img src="https://raw.githubusercontent.com/noal-alex/noal_interactive_sites/refs/heads/main/assets/logo_100.png"
-         alt="לוגו התנועה"
-         style="position: absolute; top: 20px; left: 20px; width: 220px; max-width: 35%; z-index: 100;">
+
+    <img id="logo-dark" class="site-logo" src="https://raw.githubusercontent.com/noal-alex/noal_interactive_sites/refs/heads/noal-alex-patch-1/assets/logo-darkmode.png" alt="לוגו התנועה" style="position: absolute; top: 20px; left: 20px; width: 220px; max-width: 35%; z-index: 100;">
+    
+    <img id="logo-light" class="site-logo" src="https://raw.githubusercontent.com/noal-alex/noal_interactive_sites/refs/heads/noal-alex-patch-1/assets/logo-lightmode.png" alt="לוגו התנועה" style="position: absolute; top: 20px; left: 20px; width: 220px; max-width: 35%; z-index: 100;">
+
+    <button id="theme-toggle-btn" onclick="toggleTheme()">☀️ מצב בהיר</button>
+
+    <div id="intro-modal">
+        <div class="intro-content">
+            <h2 style="font-family: var(--font-headers);">מלחמות האנרגיה</h2>
+            <p>האירועים שאנחנו רואים בחדשות הם לרוב תוצאה של מאבק גלובלי על משאבים שמתנהל ממש עכשיו מאחורי הקלעים.</p>
+            <p>ארה"ב וסין מתחרות היום על השליטה בשוק האנרגיה ועל הובלת מהפכת הבינה המלאכותית, ובעצם מעצבות מחדש את הסדר העולמי.</p>
+            <p>לחצו על העיגולים כדי לחקור, גלו את הקשרים, והיעזרו בפאנל המידע.</p>
+            <button class="start-btn" onclick="closeIntro()">התחילו לחקור</button>
+        </div>
+    </div>
 
     <div id="loader-container">
         <div class="spinner"></div>
@@ -317,7 +465,7 @@
         const primaryColor = cssVars.getPropertyValue('--primary').trim();
 
         const STORAGE_KEY = "noal_visited_nodes";
-        const SHOW_BREADCRUMBS = false; // Change to true when you're ready!
+        const SHOW_BREADCRUMBS = false; 
 
         const nodesCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTuF0csf_5-brKojkg2-AHN76hTmbAv6c8Whw3fcWAGpf-0-gRqGC5bCFnD_ogBN5VMG0Y4ZQa-u5I/pub?gid=0&single=true&output=csv";
         const linksCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTuF0csf_5-brKojkg2-AHN76hTmbAv6c8Whw3fcWAGpf-0-gRqGC5bCFnD_ogBN5VMG0Y4ZQa-u5I/pub?gid=389930858&single=true&output=csv";
@@ -326,6 +474,32 @@
         let height = window.innerHeight;
         let isMobile = window.innerWidth <= 768;
         let radiusScale = isMobile ? 1.3 : 1;
+
+        /* =============================================
+           Intro & Theme Logic
+        ============================================= */
+        function closeIntro() {
+            document.getElementById("intro-modal").style.display = "none";
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById("theme-toggle-btn");
+            if (html.getAttribute('data-theme') === 'light') {
+                html.removeAttribute('data-theme');
+                btn.textContent = "☀️ מצב בהיר";
+                localStorage.setItem("noal_theme", "dark");
+            } else {
+                html.setAttribute('data-theme', 'light');
+                btn.textContent = "🌙 מצב כהה";
+                localStorage.setItem("noal_theme", "light");
+            }
+        }
+
+        if (localStorage.getItem("noal_theme") === "light") {
+            document.documentElement.setAttribute('data-theme', 'light');
+            document.getElementById("theme-toggle-btn").textContent = "🌙 מצב כהה";
+        }
 
         /* =============================================
            visited nodes — localStorage
@@ -341,7 +515,6 @@
             if (!confirm("לאפס את כל ההתקדמות? הסימונים ימחקו.")) return;
             visitedNodes.clear();
             localStorage.removeItem(STORAGE_KEY);
-            // נקה את כל הווים הנראים
             nodesGroup.selectAll(".tick-mark").classed("visible", false);
         }
 
@@ -373,7 +546,7 @@
         /* =============================================
            מצב תצוגה + פירורי לחם
         ============================================= */
-        let isFullMode = true;
+        let isFullMode = false;
         let navHistory = [];
 
         function toggleMode() {
@@ -386,7 +559,6 @@
             } else {
                 btn.textContent = "הצג את כל הנקודות 🕸 ";
                 btn.classList.remove("full-mode");
-                // Ensure currentCenterId exists, otherwise use the first node
                 updateGraph(currentCenterId || allNodes[0].id); 
             }
         }
@@ -408,7 +580,6 @@
                 .attr("text-anchor", "middle")
                 .text(d => d.id);
 
-            // וו visited
             selection.append("text")
                 .attr("class", d => "tick-mark" + (visitedNodes.has(d.id) ? " visible" : ""))
                 .attr("x", d => getTickX(centerNodeId && d.id === centerNodeId ? d.radius * 1.3 : d.radius))
@@ -484,27 +655,23 @@
         }
 
         function renderBreadcrumb() {
-            if (!SHOW_BREADCRUMBS) return; // This stops the function immediately
+            if (!SHOW_BREADCRUMBS) return; 
             const bar = document.getElementById("breadcrumb-bar");
             bar.innerHTML = "";
             
-            // We want the last 4 items
             const MAX_VISIBLE = 4; 
             let displayItems = navHistory;
             let showingEllipsis = false;
 
             if (navHistory.length > MAX_VISIBLE) {
-                // Take the last 4
                 displayItems = navHistory.slice(-MAX_VISIBLE);
                 showingEllipsis = true;
             }
 
-            // 1. If we truncated the list, show an ellipsis (...)
             if (showingEllipsis) {
                 const ell = document.createElement("span");
                 ell.className = "bc-item";
                 ell.textContent = "...";
-                // Optional: Clicking '...' takes you back to the very first node (Home)
                 ell.addEventListener("click", () => {
                     const firstNode = navHistory[0];
                     handleNodeClick(firstNode.data);
@@ -517,7 +684,6 @@
                 bar.appendChild(sep);
             }
 
-            // 2. Render the display items
             displayItems.forEach((item, idx) => {
                 const isLast = idx === displayItems.length - 1;
                 const span = document.createElement("span");
@@ -526,16 +692,13 @@
 
                 if (!isLast) {
                     span.addEventListener("click", () => {
-                        // Find the index in the ORIGINAL full history
                         const originalIdx = navHistory.findIndex(h => h.id === item.id);
-                        // Cut the history to that point
                         navHistory = navHistory.slice(0, originalIdx + 1);
                         
                         renderBreadcrumb();
                         currentCenterId = item.id;
                         isFullMode = false;
                         
-                        // Update UI
                         const btn = document.getElementById("toggle-mode-btn");
                         btn.textContent = "הצג את כל הנקודות 🕸 ";
                         btn.classList.remove("full-mode");
@@ -554,7 +717,6 @@
                 }
             });
 
-            // Auto-scroll to the end (the newest item)
             bar.scrollLeft = bar.scrollWidth;
         }
 
@@ -624,17 +786,17 @@
                     // 1. Mark as visited
                     markVisited(largestNode.id);
                     
-                    // 2. Start with the FULL graph instead of updateGraph
-                    showFullGraph(); 
+                    // 2. Start focused instead of FULL graph
+                    isFullMode = false;
+                    updateGraph(currentCenterId); 
 
-                    // 3. Sync the button appearance
+                    // 3. Set the button to let them know they can view the full web
                     const btn = document.getElementById("toggle-mode-btn");
-                    btn.textContent = "🎯 עבור למצב ממוקד";
-                    btn.classList.add("full-mode");
+                    btn.textContent = "הצג את כל הנקודות 🕸 ";
+                    btn.classList.remove("full-mode");
 
-                    // 4. Still open the panel and breadcrumbs for the "main" node
+                    // 4. Start breadcrumbs, but DO NOT open the info panel!
                     pushBreadcrumb(largestNode);
-                    openPanel(largestNode);
                 }
 
                 loader.style.opacity = "0";
@@ -643,7 +805,6 @@
             .catch(() => { errorMessage.style.display = "block"; loader.style.display = "none"; });
 
         function updateGraph(centerNodeId) {
-            // 1. Filter the data
             let activeLinks = allLinks.filter(l => (l.source.id || l.source) === centerNodeId || (l.target.id || l.target) === centerNodeId);
             let activeNodeIds = new Set([centerNodeId]);
             activeLinks.forEach(l => {
@@ -652,7 +813,6 @@
             });
             let activeNodes = allNodes.filter(n => activeNodeIds.has(n.id));
 
-            // 2. Update the visual elements
             const linkSelection = linksGroup.selectAll(".link").data(activeLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
             const linkElements = linkSelection.join("line").attr("class", "link").attr("stroke-opacity", 0.6);
 
@@ -667,20 +827,22 @@
             applyNodeTransitions(nodeElements, centerNodeId);
             nodeSelection.exit().remove();
 
-            // 3. Reset the simulation forces
             simulation.nodes(activeNodes);
             simulation.force("link").links(activeLinks);
             simulation.force("charge", d3.forceManyBody().strength(-600 * radiusScale));
             simulation.force("collide", d3.forceCollide().radius(d => d.radius + 30));
             
-            // 4. THE FIX: Kickstart the simulation and force a zoom
-            simulation.alpha(1).restart();
+            // 1. Temporarily stop the simulation to calculate positions instantly
+            simulation.stop();
 
-            // We use a small timeout to let the simulation calculate 
-            // initial coordinates before we try to fit the screen to them.
-            setTimeout(() => {
-                fitToNodes(activeNodes);
-            }, 100); 
+            // 2. Fast-forward the physics 150 frames so the nodes reach their final layout
+            for (let i = 0; i < 150; i++) simulation.tick();
+
+            // 3. Now that the nodes are in place, aim the camera exactly at them
+            fitToNodes(activeNodes);
+
+            // 4. Restart the simulation gently so the nodes still have that "floating" interactive feel
+            simulation.alpha(0.3).restart(); 
 
             simulation.on("tick", () => {
                 linkElements.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
@@ -723,7 +885,6 @@
                 (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id
             ).length;
 
-            // Check if we are going "back" (is the node already in our history?)
             const isGoingBack = navHistory.some(h => h.id === d.id);
 
             markVisited(d.id);
@@ -743,11 +904,10 @@
                 updateGraph(currentCenterId);
             }
 
-            // Only open the panel if we aren't navigating "up" the existing trail
             if (!isGoingBack) {
                 openPanel(d);
             } else {
-                closePanel(); // Optional: close it if they go back
+                closePanel(); 
             }
         }
 
