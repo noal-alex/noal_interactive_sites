@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;700&family=Bellefair&family=Varela+Round&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>שוק האנרגיה והמלחמה - Interactive Map</title>
@@ -18,6 +19,8 @@
             --link-color: #8c8279;
             --loader-border: #3d353c;
             --visited-tick: #7ed99b;
+            --font-main: 'Assistant', sans-serif;
+            --font-headers: 'Bellefair', serif; /* A classic, elegant look for titles */
         }
 
         body {
@@ -27,6 +30,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             cursor: grab;
+            font-family: var(--font-main);
         }
         body:active { cursor: grabbing; }
 
@@ -65,6 +69,11 @@
         #panel-text b { color: var(--primary); }
         p a { color: var(--secondary); text-decoration: none; font-weight: bold; }
         p a:hover { text-decoration: underline; }
+
+        h2, #panel-title {
+            font-family: var(--font-headers);
+            font-weight: 700;
+        }
 
         .close-btn {
             background-color: var(--danger);
@@ -364,7 +373,7 @@
         /* =============================================
            מצב תצוגה + פירורי לחם
         ============================================= */
-        let isFullMode = false;
+        let isFullMode = true;
         let navHistory = [];
 
         function toggleMode() {
@@ -377,7 +386,8 @@
             } else {
                 btn.textContent = "הצג את כל הנקודות 🕸 ";
                 btn.classList.remove("full-mode");
-                updateGraph(currentCenterId);
+                // Ensure currentCenterId exists, otherwise use the first node
+                updateGraph(currentCenterId || allNodes[0].id); 
             }
         }
 
@@ -456,7 +466,10 @@
                              .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
                 nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
             });
-            simulation.on("end.fit", () => { fitToNodes(allNodes); simulation.on("end.fit", null); });
+            simulation.on("end.fit", () => { 
+                fitToNodes(allNodes); 
+                simulation.on("end.fit", null); 
+            });
         }
 
         /* --- פירורי לחם --- */
@@ -607,8 +620,19 @@
                 if (allNodes.length > 0) {
                     const largestNode = allNodes.reduce((max, node) => node.radius > max.radius ? node : max);
                     currentCenterId = largestNode.id;
+                    
+                    // 1. Mark as visited
                     markVisited(largestNode.id);
-                    updateGraph(currentCenterId);
+                    
+                    // 2. Start with the FULL graph instead of updateGraph
+                    showFullGraph(); 
+
+                    // 3. Sync the button appearance
+                    const btn = document.getElementById("toggle-mode-btn");
+                    btn.textContent = "🎯 עבור למצב ממוקד";
+                    btn.classList.add("full-mode");
+
+                    // 4. Still open the panel and breadcrumbs for the "main" node
                     pushBreadcrumb(largestNode);
                     openPanel(largestNode);
                 }
@@ -619,6 +643,7 @@
             .catch(() => { errorMessage.style.display = "block"; loader.style.display = "none"; });
 
         function updateGraph(centerNodeId) {
+            // 1. Filter the data
             let activeLinks = allLinks.filter(l => (l.source.id || l.source) === centerNodeId || (l.target.id || l.target) === centerNodeId);
             let activeNodeIds = new Set([centerNodeId]);
             activeLinks.forEach(l => {
@@ -627,6 +652,7 @@
             });
             let activeNodes = allNodes.filter(n => activeNodeIds.has(n.id));
 
+            // 2. Update the visual elements
             const linkSelection = linksGroup.selectAll(".link").data(activeLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}`);
             const linkElements = linkSelection.join("line").attr("class", "link").attr("stroke-opacity", 0.6);
 
@@ -641,18 +667,26 @@
             applyNodeTransitions(nodeElements, centerNodeId);
             nodeSelection.exit().remove();
 
+            // 3. Reset the simulation forces
             simulation.nodes(activeNodes);
             simulation.force("link").links(activeLinks);
             simulation.force("charge", d3.forceManyBody().strength(-600 * radiusScale));
             simulation.force("collide", d3.forceCollide().radius(d => d.radius + 30));
+            
+            // 4. THE FIX: Kickstart the simulation and force a zoom
             simulation.alpha(1).restart();
+
+            // We use a small timeout to let the simulation calculate 
+            // initial coordinates before we try to fit the screen to them.
+            setTimeout(() => {
+                fitToNodes(activeNodes);
+            }, 100); 
 
             simulation.on("tick", () => {
                 linkElements.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
-                             .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+                            .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
                 nodeElements.attr("transform", d => `translate(${d.x},${d.y})`);
             });
-            simulation.on("end.fit", () => { fitToNodes(activeNodes); simulation.on("end.fit", null); });
         }
 
         function fitToNodes(nodes) {
@@ -685,10 +719,14 @@
         }
 
         function handleNodeClick(d) {
-            const connectionCount = allLinks.filter(l => (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id).length;
+            const connectionCount = allLinks.filter(l => 
+                (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id
+            ).length;
+
+            // Check if we are going "back" (is the node already in our history?)
+            const isGoingBack = navHistory.some(h => h.id === d.id);
 
             markVisited(d.id);
-            // הצג וו מיידית על הצומת שנלחץ
             nodesGroup.selectAll(".node").filter(n => n.id === d.id)
                 .select(".tick-mark").classed("visible", true);
 
@@ -698,12 +736,19 @@
                 currentCenterId = d.id;
                 if (isFullMode) {
                     isFullMode = false;
-                    document.getElementById("toggle-mode-btn").textContent = "הצג את כל הנקודות 🕸 ";
-                    document.getElementById("toggle-mode-btn").classList.remove("full-mode");
+                    const btn = document.getElementById("toggle-mode-btn");
+                    btn.textContent = "הצג את כל הנקודות 🕸 ";
+                    btn.classList.remove("full-mode");
                 }
                 updateGraph(currentCenterId);
             }
-            openPanel(d);
+
+            // Only open the panel if we aren't navigating "up" the existing trail
+            if (!isGoingBack) {
+                openPanel(d);
+            } else {
+                closePanel(); // Optional: close it if they go back
+            }
         }
 
         function dragstarted(e, d) { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
